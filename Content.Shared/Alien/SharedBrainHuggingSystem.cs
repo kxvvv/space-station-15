@@ -8,7 +8,7 @@ using Content.Server.Alien;
 
 namespace Content.Shared.Alien;
 
-public abstract class SharedFaceHuggingSystem : EntitySystem
+public abstract class SharedBrainHuggingSystem : EntitySystem
 {
     [Dependency] protected readonly SharedAudioSystem _audioSystem = default!;
     [Dependency] private readonly SharedDoAfterSystem _doAfterSystem = default!;
@@ -19,17 +19,17 @@ public abstract class SharedFaceHuggingSystem : EntitySystem
     {
         base.Initialize();
 
-        SubscribeLocalEvent<FaceHuggingComponent, ComponentStartup>(OnStartup);
-        SubscribeLocalEvent<FaceHuggingComponent, FaceHuggingActionEvent>(OnFaceHuggingAction);
+        SubscribeLocalEvent<BrainHuggingComponent, ComponentStartup>(OnStartup);
+        SubscribeLocalEvent<BrainHuggingComponent, BrainSlugActionEvent>(OnBrainSlugAction);
     }
 
-    protected void OnStartup(EntityUid uid, FaceHuggingComponent component, ComponentStartup args)
+    protected void OnStartup(EntityUid uid, BrainHuggingComponent component, ComponentStartup args)
     {
-        if (component.FaceHuggingAction != null)
-            _actionsSystem.AddAction(uid, component.FaceHuggingAction, null);
+        if (component.BrainSlugAction != null)
+            _actionsSystem.AddAction(uid, component.BrainSlugAction, null);
     }
 
-    protected void OnFaceHuggingAction(EntityUid uid, FaceHuggingComponent component, FaceHuggingActionEvent args)
+    protected void OnBrainSlugAction(EntityUid uid, BrainHuggingComponent component, BrainSlugActionEvent args)
     {
         if (args.Handled)
             return;
@@ -45,7 +45,7 @@ public abstract class SharedFaceHuggingSystem : EntitySystem
                 case MobState.Alive:
                 case MobState.Critical:
                     _popupSystem.PopupEntity(Loc.GetString("Facehugger is starting to devour your brain!"), uid, uid);
-                    _doAfterSystem.TryStartDoAfter(new DoAfterArgs(uid, component.FaceHuggingTime, new FaceHuggingDoAfterEvent(), uid, target: target, used: uid)
+                    _doAfterSystem.TryStartDoAfter(new DoAfterArgs(uid, component.BrainSlugTime, new BrainHuggingDoAfterEvent(), uid, target: target, used: uid)
                     {
                         BreakOnTargetMove = false,
                         BreakOnUserMove = true,
@@ -61,7 +61,7 @@ public abstract class SharedFaceHuggingSystem : EntitySystem
     }
 }
 
-public sealed class FaceHuggingActionEvent : EntityTargetActionEvent { }
+public sealed class BrainSlugActionEvent : EntityTargetActionEvent { }
 
 [Serializable, NetSerializable]
-public sealed class FaceHuggingDoAfterEvent : SimpleDoAfterEvent { }
+public sealed class BrainHuggingDoAfterEvent : SimpleDoAfterEvent { }

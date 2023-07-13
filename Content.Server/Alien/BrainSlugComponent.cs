@@ -6,14 +6,14 @@ namespace Content.Server.Alien;
 
 
 [RegisterComponent]
-public sealed class FaceHuggerComponent : Component
+public sealed class BrainSlugComponent : Component
 {
-    [DataField("actionFaceHuggerJump", required: true)]
-    public WorldTargetAction ActionFaceHuggerJump = new();
+    [DataField("actionBrainSlugJump", required: true)]
+    public WorldTargetAction ActionBrainSlugJump = new();
 
     [ViewVariables(VVAccess.ReadWrite)]
-    [DataField("faceHuggerHuggingAction")]
-    public string FaceHuggerHuggingAction = "FaceHuggerHuggingAction";
+    [DataField("brainSlugHuggingAction")]
+    public string BrainSlugHuggingAction = "BrainSlugHuggingAction";
 
     [DataField("paralyzeTime"), ViewVariables(VVAccess.ReadWrite)]
     public float ParalyzeTime = 3f;
@@ -34,7 +34,7 @@ public sealed class FaceHuggerComponent : Component
     [DataField("damageFrequency"), ViewVariables(VVAccess.ReadWrite)]
     public float DamageFrequency = 5;
 
-    [ViewVariables(VVAccess.ReadWrite), DataField("soundFaceHuggerJump")]
-    public SoundSpecifier? SoundFaceHuggerJump = new SoundPathSpecifier("/Audio/Animals/facehugger_scream.ogg");
+    [ViewVariables(VVAccess.ReadWrite), DataField("soundBrainSlugJump")]
+    public SoundSpecifier? SoundBrainSlugJump = new SoundPathSpecifier("/Audio/Animals/brainslug_scream.ogg");
 
 }

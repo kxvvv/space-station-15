@@ -20,7 +20,7 @@ using Robust.Shared.Player;
 
 namespace Content.Server.Alien
 {
-    public sealed class FaceHuggerSystem : EntitySystem
+    public sealed class BrainSlugSystem : EntitySystem
     {
         [Dependency] private SharedStunSystem _stunSystem = default!;
         [Dependency] private readonly DamageableSystem _damageableSystem = default!;
@@ -33,24 +33,24 @@ namespace Content.Server.Alien
 
         public override void Initialize()
         {
-            SubscribeLocalEvent<FaceHuggerComponent, ComponentStartup>(OnStartup);
-            SubscribeLocalEvent<FaceHuggerComponent, MeleeHitEvent>(OnMeleeHit);
-            SubscribeLocalEvent<FaceHuggerComponent, ThrowDoHitEvent>(OnFaceHuggerDoHit);
-            SubscribeLocalEvent<FaceHuggerComponent, GotEquippedEvent>(OnGotEquipped);
-            SubscribeLocalEvent<FaceHuggerComponent, GotUnequippedEvent>(OnGotUnequipped);
-            SubscribeLocalEvent<FaceHuggerComponent, GotEquippedHandEvent>(OnGotEquippedHand);
-            SubscribeLocalEvent<FaceHuggerComponent, MobStateChangedEvent>(OnMobStateChanged);
-            SubscribeLocalEvent<FaceHuggerComponent, BeingUnequippedAttemptEvent>(OnUnequipAttempt);
-            SubscribeLocalEvent<FaceHuggerComponent, FaceHuggerJumpActionEvent>(OnJumpFaceHugger);
+            SubscribeLocalEvent<BrainSlugComponent, ComponentStartup>(OnStartup);
+            SubscribeLocalEvent<BrainSlugComponent, MeleeHitEvent>(OnMeleeHit);
+            SubscribeLocalEvent<BrainSlugComponent, ThrowDoHitEvent>(OnBrainSlugDoHit);
+            SubscribeLocalEvent<BrainSlugComponent, GotEquippedEvent>(OnGotEquipped);
+            SubscribeLocalEvent<BrainSlugComponent, GotUnequippedEvent>(OnGotUnequipped);
+            SubscribeLocalEvent<BrainSlugComponent, GotEquippedHandEvent>(OnGotEquippedHand);
+            SubscribeLocalEvent<BrainSlugComponent, MobStateChangedEvent>(OnMobStateChanged);
+            SubscribeLocalEvent<BrainSlugComponent, BeingUnequippedAttemptEvent>(OnUnequipAttempt);
+            SubscribeLocalEvent<BrainSlugComponent, BrainSlugJumpActionEvent>(OnJumpBrainSlug);
 
         }
 
-        private void OnStartup(EntityUid uid, FaceHuggerComponent component, ComponentStartup args)
+        private void OnStartup(EntityUid uid, BrainSlugComponent component, ComponentStartup args)
         {
-            _action.AddAction(uid, component.ActionFaceHuggerJump, null);
+            _action.AddAction(uid, component.ActionBrainSlugJump, null);
         }
 
-        private void OnFaceHuggerDoHit(EntityUid uid, FaceHuggerComponent component, ThrowDoHitEvent args)
+        private void OnBrainSlugDoHit(EntityUid uid, BrainSlugComponent component, ThrowDoHitEvent args)
         {
             if (component.IsDeath)
                 return;
@@ -82,7 +82,7 @@ namespace Content.Server.Alien
             _damageableSystem.TryChangeDamage(args.Target, component.Damage, origin: args.User);
         }
 
-        private void OnGotEquipped(EntityUid uid, FaceHuggerComponent component, GotEquippedEvent args)
+        private void OnGotEquipped(EntityUid uid, BrainSlugComponent component, GotEquippedEvent args)
         {
             if (args.Slot != "mask")
                 return;
@@ -90,7 +90,7 @@ namespace Content.Server.Alien
             EntityManager.RemoveComponent<CombatModeComponent>(uid);
         }
 
-        private void OnUnequipAttempt(EntityUid uid, FaceHuggerComponent component, BeingUnequippedAttemptEvent args)
+        private void OnUnequipAttempt(EntityUid uid, BrainSlugComponent component, BeingUnequippedAttemptEvent args)
         {
             if (args.Slot != "mask")
                 return;
@@ -101,7 +101,7 @@ namespace Content.Server.Alien
             args.Cancel();
         }
 
-        private void OnGotEquippedHand(EntityUid uid, FaceHuggerComponent component, GotEquippedHandEvent args)
+        private void OnGotEquippedHand(EntityUid uid, BrainSlugComponent component, GotEquippedHandEvent args)
         {
             if (component.IsDeath)
                 return;
@@ -110,7 +110,7 @@ namespace Content.Server.Alien
                 args.User, args.User);
         }
 
-        private void OnGotUnequipped(EntityUid uid, FaceHuggerComponent component, GotUnequippedEvent args)
+        private void OnGotUnequipped(EntityUid uid, BrainSlugComponent component, GotUnequippedEvent args)
         {
             if (args.Slot != "mask")
                 return;
@@ -120,7 +120,7 @@ namespace Content.Server.Alien
             EntityManager.AddComponent<NPCMeleeCombatComponent>(uid);
         }
 
-        private void OnMeleeHit(EntityUid uid, FaceHuggerComponent component, MeleeHitEvent args)
+        private void OnMeleeHit(EntityUid uid, BrainSlugComponent component, MeleeHitEvent args)
         {
             if (!args.HitEntities.Any())
                 return;
@@ -136,7 +136,7 @@ namespace Content.Server.Alien
                     return;
 
                 var random = new Random();
-                var shouldEquip = random.Next(1, 101) <= FaceHuggerComponent.ChansePounce;
+                var shouldEquip = random.Next(1, 101) <= BrainSlugComponent.ChansePounce;
                 if (!shouldEquip)
                     return;
 
@@ -161,7 +161,7 @@ namespace Content.Server.Alien
             }
         }
 
-        private static void OnMobStateChanged(EntityUid uid, FaceHuggerComponent component, MobStateChangedEvent args)
+        private static void OnMobStateChanged(EntityUid uid, BrainSlugComponent component, MobStateChangedEvent args)
         {
             if (args.NewMobState == MobState.Dead)
             {
@@ -169,13 +169,13 @@ namespace Content.Server.Alien
             }
         }
 
-        public sealed class FaceHuggerJumpActionEvent : WorldTargetActionEvent
+        public sealed class BrainSlugJumpActionEvent : WorldTargetActionEvent
         {
 
         };
 
 
-        private void OnJumpFaceHugger(EntityUid uid, FaceHuggerComponent component, FaceHuggerJumpActionEvent args)
+        private void OnJumpBrainSlug(EntityUid uid, BrainSlugComponent component, BrainSlugJumpActionEvent args)
         {
             if (args.Handled)
                 return;
@@ -189,9 +189,9 @@ namespace Content.Server.Alien
             Logger.Info(direction.ToString());
 
             _throwing.TryThrow(uid, direction, 7F, uid, 10F);
-            if (component.SoundFaceHuggerJump != null)
+            if (component.SoundBrainSlugJump != null)
             {
-                _audioSystem.PlayPvs(component.SoundFaceHuggerJump, uid, component.SoundFaceHuggerJump.Params);
+                _audioSystem.PlayPvs(component.SoundBrainSlugJump, uid, component.SoundBrainSlugJump.Params);
             }
         }
 
@@ -199,7 +199,7 @@ namespace Content.Server.Alien
         {
             base.Update(frameTime);
 
-            foreach (var comp in EntityQuery<FaceHuggerComponent>())
+            foreach (var comp in EntityQuery<BrainSlugComponent>())
             {
                 comp.Accumulator += frameTime;
 

@@ -9,23 +9,23 @@ using Content.Shared.Chemistry.Reagent;
 namespace Content.Server.Alien;
 
 [RegisterComponent, NetworkedComponent]
-[Access(typeof(SharedFaceHuggingSystem))]
-public sealed class FaceHuggingComponent : Component
+[Access(typeof(SharedBrainHuggingSystem))]
+public sealed class BrainHuggingComponent : Component
 {
-    [DataField("facehuggingActionId", customTypeSerializer: typeof(PrototypeIdSerializer<EntityTargetActionPrototype>))]
-    public string FaceHuggingActionId = "FaceHugging";
+    [DataField("brainSlugActionId", customTypeSerializer: typeof(PrototypeIdSerializer<EntityTargetActionPrototype>))]
+    public string BrainSlugActionId = "BrainSlug";
 
-    [DataField("facehuggingAction")]
-    public EntityTargetAction? FaceHuggingAction;
+    [DataField("brainSlugAction")]
+    public EntityTargetAction? BrainSlugAction;
 
-    [ViewVariables(VVAccess.ReadWrite), DataField("soundFaceHugging")]
-    public SoundSpecifier? SoundFaceHugging = new SoundPathSpecifier("/Audio/Effects/demon_consume.ogg")
+    [ViewVariables(VVAccess.ReadWrite), DataField("soundBrainHugging")]
+    public SoundSpecifier? SoundBrainHugging = new SoundPathSpecifier("/Audio/Effects/demon_consume.ogg")
     {
         Params = AudioParams.Default.WithVolume(-3f),
     };
 
-    [DataField("facehuggingTime")]
-    public float FaceHuggingTime = 3f;
+    [DataField("brainslugTime")]
+    public float BrainSlugTime = 3f;
 
     [DataField("damage", required: true)]
     [ViewVariables(VVAccess.ReadWrite)]

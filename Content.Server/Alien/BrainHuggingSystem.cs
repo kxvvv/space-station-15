@@ -10,7 +10,7 @@ using Content.Shared.Mobs;
 
 namespace Content.Server.Alien;
 
-public sealed class FaceHuggingSystem : SharedFaceHuggingSystem
+public sealed class BrainHuggingSystem : SharedBrainHuggingSystem
 {
     [Dependency] private readonly BloodstreamSystem _bloodstreamSystem = default!;
     [Dependency] private readonly MindSystem _mindSystem = default!;
@@ -22,10 +22,10 @@ public sealed class FaceHuggingSystem : SharedFaceHuggingSystem
     {
         base.Initialize();
 
-        SubscribeLocalEvent<FaceHuggingComponent, FaceHuggingDoAfterEvent>(OnDoAfter);
+        SubscribeLocalEvent<BrainHuggingComponent, BrainHuggingDoAfterEvent>(OnDoAfter);
     }
 
-    private void OnDoAfter(EntityUid uid, FaceHuggingComponent component, FaceHuggingDoAfterEvent args)
+    private void OnDoAfter(EntityUid uid, BrainHuggingComponent component, BrainHuggingDoAfterEvent args)
     {
         if (args.Handled || args.Cancelled)
             return;
@@ -58,7 +58,7 @@ public sealed class FaceHuggingSystem : SharedFaceHuggingSystem
 
 
 
-        _audioSystem.PlayPvs(component.SoundFaceHugging, uid);
+        _audioSystem.PlayPvs(component.SoundBrainHugging, uid);
     }
 }
 
