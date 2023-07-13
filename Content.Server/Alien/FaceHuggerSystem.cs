@@ -7,7 +7,6 @@ using Content.Shared.Actions;
 using Content.Shared.CombatMode;
 using Content.Shared.Damage;
 using Content.Shared.Hands;
-using Content.Shared.Hands.EntitySystems;
 using Content.Shared.Humanoid;
 using Content.Shared.Inventory;
 using Content.Shared.Inventory.Events;
@@ -27,7 +26,6 @@ namespace Content.Server.Alien
         [Dependency] private readonly DamageableSystem _damageableSystem = default!;
         [Dependency] private readonly PopupSystem _popup = default!;
         [Dependency] private readonly InventorySystem _inventory = default!;
-        [Dependency] private readonly SharedHandsSystem _handsSystem = default!;
         [Dependency] private readonly SharedCombatModeSystem _combat = default!;
         [Dependency] private readonly ThrowingSystem _throwing = default!;
         [Dependency] private readonly SharedAudioSystem _audioSystem = default!;
@@ -44,6 +42,7 @@ namespace Content.Server.Alien
             SubscribeLocalEvent<FaceHuggerComponent, MobStateChangedEvent>(OnMobStateChanged);
             SubscribeLocalEvent<FaceHuggerComponent, BeingUnequippedAttemptEvent>(OnUnequipAttempt);
             SubscribeLocalEvent<FaceHuggerComponent, FaceHuggerJumpActionEvent>(OnJumpFaceHugger);
+
         }
 
         private void OnStartup(EntityUid uid, FaceHuggerComponent component, ComponentStartup args)
@@ -55,17 +54,9 @@ namespace Content.Server.Alien
         {
             if (component.IsDeath)
                 return;
-            //if (HasComp<FleshCultistComponent>(args.Target))
-            //    return;
             if (!HasComp<HumanoidAppearanceComponent>(args.Target))
                 return;
-            if (TryComp(args.Target, out MobStateComponent? mobState))
-            {
-                if (mobState.CurrentState is not MobState.Alive)
-                {
-                    return;
-                }
-            }
+
             _inventory.TryGetSlotEntity(args.Target, "head", out var headItem);
             if (HasComp<IngestionBlockerComponent>(headItem))
                 return;
@@ -76,14 +67,14 @@ namespace Content.Server.Alien
 
             component.EquipedOn = args.Target;
 
-            _popup.PopupEntity(Loc.GetString("FaceHugger 1"),
+            _popup.PopupEntity(Loc.GetString("The facehugger has latched onto your face!"),
                 args.Target, args.Target, PopupType.LargeCaution);
 
-            _popup.PopupEntity(Loc.GetString("FaceHugger 2",
+            _popup.PopupEntity(Loc.GetString("You have latched onto his face!",
                     ("entity", args.Target)),
                 uid, uid, PopupType.LargeCaution);
 
-            _popup.PopupEntity(Loc.GetString("FaceHugger 3",
+            _popup.PopupEntity(Loc.GetString("The facehugger is eating his face!",
                 ("entity", args.Target)), args.Target, Filter.PvsExcept(uid), true, PopupType.Large);
 
             EntityManager.RemoveComponent<CombatModeComponent>(uid);
@@ -105,24 +96,17 @@ namespace Content.Server.Alien
                 return;
             if (component.EquipedOn != args.Unequipee)
                 return;
-            //if (HasComp<FleshCultistComponent>(args.Unequipee))
-            //    return;
-            _popup.PopupEntity(Loc.GetString("FaceHugger 4"),
+            _popup.PopupEntity(Loc.GetString("You can't remove the facehugger from your face."),
                 args.Unequipee, args.Unequipee, PopupType.Large);
             args.Cancel();
         }
 
         private void OnGotEquippedHand(EntityUid uid, FaceHuggerComponent component, GotEquippedHandEvent args)
         {
-            //if (HasComp<FleshPudgeComponent>(args.User))
-            //    return;
-            //if (HasComp<FleshCultistComponent>(args.User))
-            //    return;
             if (component.IsDeath)
                 return;
-            // _handsSystem.TryDrop(args.User, uid, checkActionBlocker: false);
             _damageableSystem.TryChangeDamage(args.User, component.Damage);
-            _popup.PopupEntity(Loc.GetString("FaceHugger 5"),
+            _popup.PopupEntity(Loc.GetString("The facehugger has bitten your hand!"),
                 args.User, args.User);
         }
 
@@ -146,13 +130,6 @@ namespace Content.Server.Alien
                 if (!HasComp<HumanoidAppearanceComponent>(entity))
                     return;
 
-                if (TryComp(entity, out MobStateComponent? mobState))
-                {
-                    if (mobState.CurrentState is not MobState.Alive)
-                    {
-                        return;
-                    }
-                }
 
                 _inventory.TryGetSlotEntity(entity, "head", out var headItem);
                 if (HasComp<IngestionBlockerComponent>(headItem))
@@ -169,18 +146,18 @@ namespace Content.Server.Alien
 
                 component.EquipedOn = entity;
 
-                _popup.PopupEntity(Loc.GetString("FaceHugger 6"),
+                _popup.PopupEntity(Loc.GetString("The facehugger has latched onto your face!"),
                     entity, entity, PopupType.LargeCaution);
 
-                _popup.PopupEntity(Loc.GetString("FaceHugger 7", ("entity", entity)),
+                _popup.PopupEntity(Loc.GetString("You have latched onto his face!", ("entity", entity)),
                     uid, uid, PopupType.LargeCaution);
 
-                _popup.PopupEntity(Loc.GetString("FaceHugger 8",
+                _popup.PopupEntity(Loc.GetString("The facehugger is eating his face!",
                     ("entity", entity)), entity, Filter.PvsExcept(entity), true, PopupType.Large);
                 EntityManager.RemoveComponent<CombatModeComponent>(uid);
                 _stunSystem.TryParalyze(entity, TimeSpan.FromSeconds(component.ParalyzeTime), true);
                 _damageableSystem.TryChangeDamage(entity, component.Damage, origin: entity);
-                break;
+
             }
         }
 
@@ -196,6 +173,7 @@ namespace Content.Server.Alien
         {
 
         };
+
 
         private void OnJumpFaceHugger(EntityUid uid, FaceHuggerComponent component, FaceHuggerJumpActionEvent args)
         {
@@ -232,8 +210,6 @@ namespace Content.Server.Alien
 
                 if (comp.EquipedOn is not { Valid: true } targetId)
                     continue;
-                //if (HasComp<FleshCultistComponent>(comp.EquipedOn))
-                //    return;
                 if (TryComp(targetId, out MobStateComponent? mobState))
                 {
                     if (mobState.CurrentState is not MobState.Alive)
@@ -244,9 +220,9 @@ namespace Content.Server.Alien
                     }
                 }
                 _damageableSystem.TryChangeDamage(targetId, comp.Damage);
-                _popup.PopupEntity(Loc.GetString("FaceHugger 10"),
+                _popup.PopupEntity(Loc.GetString("The facehugger is eating your face!"),
                     targetId, targetId, PopupType.LargeCaution);
-                _popup.PopupEntity(Loc.GetString("FaceHugger 11",
+                _popup.PopupEntity(Loc.GetString("The facehugger is eating his face!",
                     ("entity", targetId)), targetId, Filter.PvsExcept(targetId), true);
             }
         }

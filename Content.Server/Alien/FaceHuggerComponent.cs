@@ -4,12 +4,16 @@ using Robust.Shared.Audio;
 
 namespace Content.Server.Alien;
 
-[Access(typeof(FaceHuggerSystem))]
+
 [RegisterComponent]
 public sealed class FaceHuggerComponent : Component
 {
     [DataField("actionFaceHuggerJump", required: true)]
     public WorldTargetAction ActionFaceHuggerJump = new();
+
+    [ViewVariables(VVAccess.ReadWrite)]
+    [DataField("faceHuggerHuggingAction")]
+    public string FaceHuggerHuggingAction = "FaceHuggerHuggingAction";
 
     [DataField("paralyzeTime"), ViewVariables(VVAccess.ReadWrite)]
     public float ParalyzeTime = 3f;
