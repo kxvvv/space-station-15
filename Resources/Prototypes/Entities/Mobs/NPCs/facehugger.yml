@@ -1,0 +1,95 @@
+- type: entity
+  parent: SimpleMobBase
+  name: face hugger
+  id: MobFaceHugger
+  components:
+    # - type: FleshMob
+    #   soundDeath: "/Audio/Animals/facehugger_dead.ogg"
+    #   deathMobSpawnId: "MobFleshWorm"
+    #   deathMobSpawnCount: 0
+    - type: FaceHugger
+      paralyzeTime: 3
+      chansePounce: 33
+      damage:
+        types:
+          Piercing: 2
+      actionFaceHuggerJump:
+        useDelay: 10
+        icon: Interface/Actions/devour.png
+        name: jump
+        description: jump desc
+        itemIconStyle: NoItem
+        range: 160
+        event: !type:FaceHuggerJumpActionEvent
+    - type: Sprite
+      sprite: Mobs/Aliens/facehugger.rsi
+      drawdepth: SmallMobs
+      noRot: true
+      layers:
+        - map: [ "enum.DamageStateVisualLayers.Base" ]
+          state: facehugger
+    - type: DamageStateVisuals
+      states:
+        Alive:
+          Base: facehugger
+        Critical:
+          Base: facehugger_dead
+        Dead:
+          Base: facehugger_dead
+    # - type: Vocal
+    #   sounds:
+    #     Unsexed: FleshWormEmote
+    - type: Item
+      sprite: Mobs/Aliens/facehugger.rsi
+      heldPrefix: facehugger
+      size: 5
+    - type: Clothing
+      quickEquip: false
+      sprite: Mobs/Aliens/facehugger.rsi
+      equippedPrefix: facehugger
+      slots:
+        - MASK
+    - type: Physics
+      bodyType: Dynamic
+    - type: Fixtures
+      fixtures:
+        fix1:
+          shape:
+            !type:PhysShapeCircle
+            radius: 0.2
+          density: 100
+          mask:
+            - SmallMobMask
+          layer:
+            - SmallMobLayer
+    - type: Speech
+    - type: Bloodstream
+      bloodMaxVolume: 10
+      bloodReagent: Blood
+    - type: GhostRole
+      allowMovement: true
+      allowSpeech: true
+      makeSentient: true
+      name: facehugger
+      description: facehugger
+      rules: Не атакуйте культистов плоти, не ломайте ДАМы, сервера, консоли и прочее. Не делайте разгерметизацию.
+    - type: GhostTakeoverAvailable
+    - type: MeleeWeapon
+      hidden: true
+      soundHit:
+        path: /Audio/Effects/bite.ogg
+      angle: 0
+      animation: WeaponArcBite
+      damage:
+        types:
+          Piercing: 2
+    - type: MobThresholds
+      thresholds:
+        0: Alive
+        25: Dead
+    - type: MovementSpeedModifier
+      baseWalkSpeed: 3
+      baseSprintSpeed: 4
+    - type: Tag
+      tags:
+        - CannotSuicide
