@@ -77,7 +77,7 @@ namespace Content.Server.Alien
             _popup.PopupEntity(Loc.GetString("The facehugger is eating his face!",
                 ("entity", args.Target)), args.Target, Filter.PvsExcept(uid), true, PopupType.Large);
 
-            EntityManager.RemoveComponent<CombatModeComponent>(uid);
+            //EntityManager.RemoveComponent<CombatModeComponent>(uid);
             _stunSystem.TryParalyze(args.Target, TimeSpan.FromSeconds(component.ParalyzeTime), true);
             _damageableSystem.TryChangeDamage(args.Target, component.Damage, origin: args.User);
         }
@@ -87,7 +87,7 @@ namespace Content.Server.Alien
             if (args.Slot != "mask")
                 return;
             component.EquipedOn = args.Equipee;
-            EntityManager.RemoveComponent<CombatModeComponent>(uid);
+            //EntityManager.RemoveComponent<CombatModeComponent>(uid);
         }
 
         private void OnUnequipAttempt(EntityUid uid, BrainSlugComponent component, BeingUnequippedAttemptEvent args)
@@ -115,9 +115,9 @@ namespace Content.Server.Alien
             if (args.Slot != "mask")
                 return;
             component.EquipedOn = new EntityUid();
-            var combatMode = EntityManager.AddComponent<CombatModeComponent>(uid);
-            _combat.SetInCombatMode(uid, true, combatMode);
-            EntityManager.AddComponent<NPCMeleeCombatComponent>(uid);
+            //var combatMode = EntityManager.AddComponent<CombatModeComponent>(uid);
+            //_combat.SetInCombatMode(uid, true, combatMode);
+            //EntityManager.AddComponent<NPCMeleeCombatComponent>(uid);
         }
 
         private void OnMeleeHit(EntityUid uid, BrainSlugComponent component, MeleeHitEvent args)
@@ -154,7 +154,8 @@ namespace Content.Server.Alien
 
                 _popup.PopupEntity(Loc.GetString("The facehugger is eating his face!",
                     ("entity", entity)), entity, Filter.PvsExcept(entity), true, PopupType.Large);
-                EntityManager.RemoveComponent<CombatModeComponent>(uid);
+
+                //EntityManager.RemoveComponent<CombatModeComponent>(uid);
                 _stunSystem.TryParalyze(entity, TimeSpan.FromSeconds(component.ParalyzeTime), true);
                 _damageableSystem.TryChangeDamage(entity, component.Damage, origin: entity);
 
@@ -219,11 +220,9 @@ namespace Content.Server.Alien
                         return;
                     }
                 }
-                _damageableSystem.TryChangeDamage(targetId, comp.Damage);
-                _popup.PopupEntity(Loc.GetString("The facehugger is eating your face!"),
+
+                _popup.PopupEntity(Loc.GetString("You feel as if something is stirring inside you."),
                     targetId, targetId, PopupType.LargeCaution);
-                _popup.PopupEntity(Loc.GetString("The facehugger is eating his face!",
-                    ("entity", targetId)), targetId, Filter.PvsExcept(targetId), true);
             }
         }
     }

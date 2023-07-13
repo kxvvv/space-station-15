@@ -1,51 +1,48 @@
 - type: entity
   parent: SimpleMobBase
-  name: face hugger
-  id: MobFaceHugger
+  name: brain slug
+  id: MobBrainSlug
+  suffix: qweqwe
   components:
-    # - type: FleshMob
+    # - type: BrainSlugMob
     #   soundDeath: "/Audio/Animals/facehugger_dead.ogg"
-    #   deathMobSpawnId: "MobFleshWorm"
-    #   deathMobSpawnCount: 0
-    - type: FaceHugger
+    - type: BrainSlug
       paralyzeTime: 3
-      chansePounce: 33
+      chansePounce: 100
       damage:
         types:
           Piercing: 2
-      actionFaceHuggerJump:
-        useDelay: 10
+      actionBrainSlugJump:
+        useDelay: 2
         icon: Interface/Actions/devour.png
         name: jump
         description: jump desc
         itemIconStyle: NoItem
         range: 160
-        event: !type:FaceHuggerJumpActionEvent
+        event: !type:BrainSlugJumpActionEvent
     - type: Sprite
-      sprite: Mobs/Aliens/facehugger.rsi
+      sprite: Mobs/Aliens/brainslug.rsi
       drawdepth: SmallMobs
       noRot: true
       layers:
         - map: [ "enum.DamageStateVisualLayers.Base" ]
-          state: facehugger
+          state: alive
     - type: DamageStateVisuals
       states:
         Alive:
-          Base: facehugger
-        Critical:
-          Base: facehugger_dead
+          Base: alive
         Dead:
-          Base: facehugger_dead
+          Base: dead
     # - type: Vocal
     #   sounds:
-    #     Unsexed: FleshWormEmote
+    #     Unsexed: BrainSlugEmote
     - type: Item
-      sprite: Mobs/Aliens/facehugger.rsi
-      heldPrefix: facehugger
-      size: 5
+      # sprite: Mobs/Aliens/brainslug.rsi
+      # heldPrefix: alive
+      # size: 5
     - type: Clothing
       quickEquip: false
-      sprite: Mobs/Aliens/facehugger.rsi
+      # sprite: Mobs/Aliens/brainslug.rsi
       equippedPrefix: facehugger
       slots:
         - MASK
@@ -70,9 +67,9 @@
       allowMovement: true
       allowSpeech: true
       makeSentient: true
-      name: facehugger
-      description: facehugger
-      rules: Не атакуйте культистов плоти, не ломайте ДАМы, сервера, консоли и прочее. Не делайте разгерметизацию.
+      name: brainslug
+      description: brainslug
+      rules: brainslug
     - type: GhostTakeoverAvailable
     - type: MeleeWeapon
       hidden: true
@@ -86,10 +83,31 @@
     - type: MobThresholds
       thresholds:
         0: Alive
-        25: Dead
+        50: Dead
     - type: MovementSpeedModifier
       baseWalkSpeed: 3
       baseSprintSpeed: 4
     - type: Tag
       tags:
         - CannotSuicide
+    - type: BrainHugging
+      dominateVictimAction:
+        event: !type:DominateVictimActionEvent
+        icon: Interface/Actions/blight.png
+        name: victim
+        description: asdasdasdasd
+        useDelay: 2
+      brainSlugAction:
+        event: !type:BrainSlugActionEvent
+        icon: Interface/Actions/carp_summon.png
+        name: slug
+        description: description
+      damage:
+        types:
+          Piercing: 50
+      releaseSlugAction:
+        event: !type:ReleaseSlugActionEvent
+        icon: Interface/Actions/overloadlight.png
+        name: release
+        description: asasdasddasdasdasd
+        useDelay: 2
