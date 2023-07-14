@@ -1,0 +1,45 @@
+{
+    "version": 1,
+    "size": {
+        "x": 32,
+        "y": 32
+    },
+    "license": "CC-BY-SA-3.0",
+    "copyright": "Made by NEKISH#6934/gr0x",
+    "states": [
+        {
+            "name": "borer_whisper"
+        },
+        {
+            "name": "borer_torment"
+        },
+        {
+            "name": "borer_secret"
+        },
+        {
+            "name": "borer_reproduce"
+        },
+        {
+            "name": "borer_outfest"
+        },
+        {
+            "name": "borer_jump"
+        },
+        {
+            "name": "borer_infest"
+        },
+        {
+            "name": "borer_hiding"
+        },
+        {
+            "name": "borer_dominate"
+        },
+        {
+            "name": "borer_brain_out"
+        },
+        {
+            "name": "borer_brain"
+        }
+
+    ]
+}
