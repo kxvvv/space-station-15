@@ -4,22 +4,41 @@
   id: MobBrainSlug
   suffix: qweqwe
   components:
-    # - type: BrainSlugMob
-    #   soundDeath: "/Audio/Animals/facehugger_dead.ogg"
-    - type: BrainSlug
+    - type: BrainSlug ## first
+    - type: BrainHugging ## second
       paralyzeTime: 3
       chansePounce: 100
-      damage:
-        types:
-          Piercing: 2
       actionBrainSlugJump:
-        useDelay: 2
-        icon: Interface/Actions/devour.png
+        icon: Interface/Actions/brainslug.rsi/borer_jump.png
         name: jump
         description: jump desc
         itemIconStyle: NoItem
         range: 160
-        event: !type:BrainSlugJumpActionEvent
+        priority: -10
+        useDelay: 2
+        event: !type:BrainSlugJumpActionEvent # jump
+      brainSlugAction:
+        icon: Interface/Actions/brainslug.rsi/borer_infest.png
+        name: infest
+        description: infest desc
+        priority: -11
+        useDelay: 2
+        event: !type:BrainSlugActionEvent #infest
+      dominateVictimAction:
+        icon: Interface/Actions/brainslug.rsi/borer_dominate.png
+        name: stun
+        description: stun desc
+        priority: -12
+        useDelay: 2
+        event: !type:DominateVictimActionEvent #stun
+      releaseSlugAction:
+        icon: Interface/Actions/brainslug.rsi/borer_brain_out.png
+        name: release
+        description: release desc
+        itemIconStyle: NoItem
+        priority: -13
+        useDelay: 2
+        event: !type:ReleaseSlugActionEvent # release
     - type: Sprite
       sprite: Mobs/Aliens/brainslug.rsi
       drawdepth: SmallMobs
@@ -37,15 +56,6 @@
     #   sounds:
     #     Unsexed: BrainSlugEmote
     - type: Item
-      # sprite: Mobs/Aliens/brainslug.rsi
-      # heldPrefix: alive
-      # size: 5
-    - type: Clothing
-      quickEquip: false
-      # sprite: Mobs/Aliens/brainslug.rsi
-      equippedPrefix: facehugger
-      slots:
-        - MASK
     - type: Physics
       bodyType: Dynamic
     - type: Fixtures
@@ -83,31 +93,10 @@
     - type: MobThresholds
       thresholds:
         0: Alive
-        50: Dead
+        25: Dead
     - type: MovementSpeedModifier
       baseWalkSpeed: 3
       baseSprintSpeed: 4
     - type: Tag
       tags:
         - CannotSuicide
-    - type: BrainHugging
-      dominateVictimAction:
-        event: !type:DominateVictimActionEvent
-        icon: Interface/Actions/blight.png
-        name: victim
-        description: asdasdasdasd
-        useDelay: 2
-      brainSlugAction:
-        event: !type:BrainSlugActionEvent
-        icon: Interface/Actions/carp_summon.png
-        name: slug
-        description: description
-      damage:
-        types:
-          Piercing: 50
-      releaseSlugAction:
-        event: !type:ReleaseSlugActionEvent
-        icon: Interface/Actions/overloadlight.png
-        name: release
-        description: asasdasddasdasdasd
-        useDelay: 2

@@ -1,7 +1,5 @@
 using System.Linq;
 using Content.Server.Actions;
-using Content.Server.NPC.Components;
-using Content.Server.Nutrition.EntitySystems;
 using Content.Server.Popups;
 using Content.Shared.Actions;
 using Content.Shared.CombatMode;
@@ -16,167 +14,92 @@ using Content.Shared.Popups;
 using Content.Shared.Stunnable;
 using Content.Shared.Throwing;
 using Content.Shared.Weapons.Melee.Events;
+using Robust.Shared.Containers;
 using Robust.Shared.Player;
+using Robust.Shared.Utility;
+using Content.Shared.Alien;
+using Robust.Shared.Prototypes;
+using Content.Shared.DoAfter;
+using Content.Server.Body.Systems;
+using Content.Shared.Chemistry.Components;
+
 
 namespace Content.Server.Alien
 {
-    public sealed class BrainSlugSystem : EntitySystem
+    public sealed class BrainSlugSystem : SharedBrainHuggingSystem
     {
         [Dependency] private SharedStunSystem _stunSystem = default!;
         [Dependency] private readonly DamageableSystem _damageableSystem = default!;
         [Dependency] private readonly PopupSystem _popup = default!;
         [Dependency] private readonly InventorySystem _inventory = default!;
-        [Dependency] private readonly SharedCombatModeSystem _combat = default!;
         [Dependency] private readonly ThrowingSystem _throwing = default!;
         [Dependency] private readonly SharedAudioSystem _audioSystem = default!;
-        [Dependency] private readonly ActionsSystem _action = default!;
+        [Dependency] private readonly SharedDoAfterSystem _doAfterSystem = default!;
+        [Dependency] private readonly SharedActionsSystem _actionsSystem = default!;
+        [Dependency] private readonly BloodstreamSystem _bloodstreamSystem = default!;
 
         public override void Initialize()
         {
-            SubscribeLocalEvent<BrainSlugComponent, ComponentStartup>(OnStartup);
-            SubscribeLocalEvent<BrainSlugComponent, MeleeHitEvent>(OnMeleeHit);
-            SubscribeLocalEvent<BrainSlugComponent, ThrowDoHitEvent>(OnBrainSlugDoHit);
-            SubscribeLocalEvent<BrainSlugComponent, GotEquippedEvent>(OnGotEquipped);
-            SubscribeLocalEvent<BrainSlugComponent, GotUnequippedEvent>(OnGotUnequipped);
-            SubscribeLocalEvent<BrainSlugComponent, GotEquippedHandEvent>(OnGotEquippedHand);
-            SubscribeLocalEvent<BrainSlugComponent, MobStateChangedEvent>(OnMobStateChanged);
-            SubscribeLocalEvent<BrainSlugComponent, BeingUnequippedAttemptEvent>(OnUnequipAttempt);
-            SubscribeLocalEvent<BrainSlugComponent, BrainSlugJumpActionEvent>(OnJumpBrainSlug);
+            SubscribeLocalEvent<BrainHuggingComponent, ComponentStartup>(OnStartup);
 
+
+            SubscribeLocalEvent<BrainHuggingComponent, BrainSlugJumpActionEvent>(OnJumpBrainSlug);
+            SubscribeLocalEvent<BrainHuggingComponent, ThrowDoHitEvent>(OnBrainSlugDoHit);
+
+            SubscribeLocalEvent<BrainHuggingComponent, BrainSlugActionEvent>(OnBrainSlugAction);
+            SubscribeLocalEvent<BrainHuggingComponent, BrainHuggingDoAfterEvent>(BrainHuggingOnDoAfter);
+
+            SubscribeLocalEvent<BrainHuggingComponent, DominateVictimActionEvent>(OnDominateVictimAction);
+
+            SubscribeLocalEvent<BrainHuggingComponent, ReleaseSlugActionEvent>(OnReleaseSlugAction);
+            SubscribeLocalEvent<BrainSlugComponent, ReleaseSlugDoAfterEvent>(ReleaseSlugDoAfter);
         }
 
-        private void OnStartup(EntityUid uid, BrainSlugComponent component, ComponentStartup args)
+
+        protected void OnStartup(EntityUid uid, BrainHuggingComponent component, ComponentStartup args)
         {
-            _action.AddAction(uid, component.ActionBrainSlugJump, null);
+            if (component.ActionBrainSlugJump != null)
+                _actionsSystem.AddAction(uid, component.ActionBrainSlugJump, null);
+
+            if (component.BrainSlugAction != null)
+                _actionsSystem.AddAction(uid, component.BrainSlugAction, null);
         }
 
-        private void OnBrainSlugDoHit(EntityUid uid, BrainSlugComponent component, ThrowDoHitEvent args)
+
+        private void OnBrainSlugDoHit(EntityUid uid, BrainHuggingComponent component, ThrowDoHitEvent args)
         {
-            if (component.IsDeath)
+
+            TryComp(uid, out BrainSlugComponent? defcomp);
+            if (defcomp == null)
+            {
                 return;
+            }
+
+
             if (!HasComp<HumanoidAppearanceComponent>(args.Target))
                 return;
 
-            _inventory.TryGetSlotEntity(args.Target, "head", out var headItem);
-            if (HasComp<IngestionBlockerComponent>(headItem))
-                return;
 
-            var equipped = _inventory.TryEquip(args.Target, uid, "mask", true);
-            if (!equipped)
-                return;
+            var host = args.Target;
 
-            component.EquipedOn = args.Target;
 
-            _popup.PopupEntity(Loc.GetString("The facehugger has latched onto your face!"),
+            defcomp.GuardianContainer = host.EnsureContainer<ContainerSlot>("GuardianContainer");
+
+
+            defcomp.GuardianContainer.Insert(uid);
+            DebugTools.Assert(defcomp.GuardianContainer.Contains(uid));
+
+
+
+            defcomp.EquipedOn = args.Target;
+
+            _popup.PopupEntity(Loc.GetString("Something jumped on you!"),
                 args.Target, args.Target, PopupType.LargeCaution);
-
-            _popup.PopupEntity(Loc.GetString("You have latched onto his face!",
-                    ("entity", args.Target)),
-                uid, uid, PopupType.LargeCaution);
-
-            _popup.PopupEntity(Loc.GetString("The facehugger is eating his face!",
-                ("entity", args.Target)), args.Target, Filter.PvsExcept(uid), true, PopupType.Large);
-
-            //EntityManager.RemoveComponent<CombatModeComponent>(uid);
-            _stunSystem.TryParalyze(args.Target, TimeSpan.FromSeconds(component.ParalyzeTime), true);
-            _damageableSystem.TryChangeDamage(args.Target, component.Damage, origin: args.User);
         }
 
-        private void OnGotEquipped(EntityUid uid, BrainSlugComponent component, GotEquippedEvent args)
-        {
-            if (args.Slot != "mask")
-                return;
-            component.EquipedOn = args.Equipee;
-            //EntityManager.RemoveComponent<CombatModeComponent>(uid);
-        }
-
-        private void OnUnequipAttempt(EntityUid uid, BrainSlugComponent component, BeingUnequippedAttemptEvent args)
-        {
-            if (args.Slot != "mask")
-                return;
-            if (component.EquipedOn != args.Unequipee)
-                return;
-            _popup.PopupEntity(Loc.GetString("You can't remove the facehugger from your face."),
-                args.Unequipee, args.Unequipee, PopupType.Large);
-            args.Cancel();
-        }
-
-        private void OnGotEquippedHand(EntityUid uid, BrainSlugComponent component, GotEquippedHandEvent args)
-        {
-            if (component.IsDeath)
-                return;
-            _damageableSystem.TryChangeDamage(args.User, component.Damage);
-            _popup.PopupEntity(Loc.GetString("The facehugger has bitten your hand!"),
-                args.User, args.User);
-        }
-
-        private void OnGotUnequipped(EntityUid uid, BrainSlugComponent component, GotUnequippedEvent args)
-        {
-            if (args.Slot != "mask")
-                return;
-            component.EquipedOn = new EntityUid();
-            //var combatMode = EntityManager.AddComponent<CombatModeComponent>(uid);
-            //_combat.SetInCombatMode(uid, true, combatMode);
-            //EntityManager.AddComponent<NPCMeleeCombatComponent>(uid);
-        }
-
-        private void OnMeleeHit(EntityUid uid, BrainSlugComponent component, MeleeHitEvent args)
-        {
-            if (!args.HitEntities.Any())
-                return;
-
-            foreach (var entity in args.HitEntities)
-            {
-                if (!HasComp<HumanoidAppearanceComponent>(entity))
-                    return;
 
 
-                _inventory.TryGetSlotEntity(entity, "head", out var headItem);
-                if (HasComp<IngestionBlockerComponent>(headItem))
-                    return;
-
-                var random = new Random();
-                var shouldEquip = random.Next(1, 101) <= BrainSlugComponent.ChansePounce;
-                if (!shouldEquip)
-                    return;
-
-                var equipped = _inventory.TryEquip(entity, uid, "mask", true);
-                if (!equipped)
-                    return;
-
-                component.EquipedOn = entity;
-
-                _popup.PopupEntity(Loc.GetString("The facehugger has latched onto your face!"),
-                    entity, entity, PopupType.LargeCaution);
-
-                _popup.PopupEntity(Loc.GetString("You have latched onto his face!", ("entity", entity)),
-                    uid, uid, PopupType.LargeCaution);
-
-                _popup.PopupEntity(Loc.GetString("The facehugger is eating his face!",
-                    ("entity", entity)), entity, Filter.PvsExcept(entity), true, PopupType.Large);
-
-                //EntityManager.RemoveComponent<CombatModeComponent>(uid);
-                _stunSystem.TryParalyze(entity, TimeSpan.FromSeconds(component.ParalyzeTime), true);
-                _damageableSystem.TryChangeDamage(entity, component.Damage, origin: entity);
-
-            }
-        }
-
-        private static void OnMobStateChanged(EntityUid uid, BrainSlugComponent component, MobStateChangedEvent args)
-        {
-            if (args.NewMobState == MobState.Dead)
-            {
-                component.IsDeath = true;
-            }
-        }
-
-        public sealed class BrainSlugJumpActionEvent : WorldTargetActionEvent
-        {
-
-        };
-
-
-        private void OnJumpBrainSlug(EntityUid uid, BrainSlugComponent component, BrainSlugJumpActionEvent args)
+        private void OnJumpBrainSlug(EntityUid uid, BrainHuggingComponent component, BrainSlugJumpActionEvent args)
         {
             if (args.Handled)
                 return;
@@ -196,9 +119,162 @@ namespace Content.Server.Alien
             }
         }
 
+
+        private void OnBrainSlugAction(EntityUid uid, BrainHuggingComponent component, BrainSlugActionEvent args)
+        {
+            if (args.Handled)
+                return;
+
+            args.Handled = true;
+            var target = args.Target;
+
+            TryComp(uid, out BrainHuggingComponent? hugcomp);
+            if (hugcomp == null)
+            {
+                return;
+            }
+
+            if (TryComp(target, out MobStateComponent? targetState))
+            {
+
+                switch (targetState.CurrentState)
+                {
+                    case MobState.Alive:
+                    case MobState.Critical:
+                        _popup.PopupEntity(Loc.GetString("Slug is sucking on your brain!"), uid, uid);
+                        _doAfterSystem.TryStartDoAfter(new DoAfterArgs(uid, hugcomp.BrainSlugTime, new BrainHuggingDoAfterEvent(), uid, target: target, used: uid)
+                        {
+                            BreakOnTargetMove = false,
+                            BreakOnUserMove = true,
+                        });
+                        break;
+                    default:
+                        _popup.PopupEntity(Loc.GetString("The target is dead!"), uid, uid);
+                        break;
+                }
+
+                return;
+            }
+        }
+
+
+        private void BrainHuggingOnDoAfter(EntityUid uid, BrainHuggingComponent component, BrainHuggingDoAfterEvent args)
+        {
+            if (args.Handled || args.Cancelled)
+                return;
+
+            else if (args.Args.Target != null)
+            {
+                var target = args.Target;
+                if (target == null)
+                {
+                    return;
+                }
+
+
+                if (component.DominateVictimAction != null)
+                    _actionsSystem.AddAction(uid, component.DominateVictimAction, null);
+
+                if (component.ReleaseSlugAction != null)
+                    _actionsSystem.AddAction(uid, component.ReleaseSlugAction, null);
+
+                if (component.ActionBrainSlugJump != null)
+                    _actionsSystem.RemoveAction(uid, component.ActionBrainSlugJump, null);
+
+                if (component.BrainSlugAction != null)
+                    _actionsSystem.RemoveAction(uid, component.BrainSlugAction, null);
+
+
+                if (TryComp(target, out MobStateComponent? mobState))
+                {
+                    if (mobState.CurrentState == MobState.Critical)
+                    {
+                        _popup.PopupEntity(Loc.GetString("Brain Slug is trying save your body!"), target.Value, target.Value);
+                        var ichorInjection = new Solution(component.IchorChemical, component.HealRate);
+                        ichorInjection.ScaleSolution(5.0f);
+                        _bloodstreamSystem.TryAddToChemicals(target.Value, ichorInjection);
+                    }
+                }
+            }
+
+
+
+            _audioSystem.PlayPvs(component.SoundBrainHugging, uid);
+        }
+
+        private void OnDominateVictimAction(EntityUid uid, BrainHuggingComponent comp, DominateVictimActionEvent args)
+        {
+            if (args.Handled)
+                return;
+
+            args.Handled = true;
+            var target = args.Target;
+
+            TryComp(uid, out BrainHuggingComponent? hugcomp);
+            if (hugcomp == null)
+            {
+                return;
+            }
+
+
+            _popup.PopupEntity(Loc.GetString("Your limbs are stiff!"), uid, uid);
+            _stunSystem.TryParalyze(args.Target, TimeSpan.FromSeconds(hugcomp.ParalyzeTime), true);
+        }
+
+
+
+
+        private void OnReleaseSlugAction (EntityUid uid, BrainHuggingComponent comp, ReleaseSlugActionEvent args)
+        {
+            TryComp(uid, out BrainSlugComponent? defcomp);
+            if (defcomp == null)
+            {
+                return;
+            }
+
+            var target = defcomp.EquipedOn;
+
+
+
+            _doAfterSystem.TryStartDoAfter(new DoAfterArgs(uid, comp.BrainSlugTime, new ReleaseSlugDoAfterEvent(), uid, target: target, used: uid)
+            {
+                BreakOnTargetMove = false,
+                BreakOnUserMove = true,
+            });
+        }
+
+
+        private void ReleaseSlugDoAfter(EntityUid uid, BrainSlugComponent component, ReleaseSlugDoAfterEvent args)
+        {
+            TryComp(uid, out BrainHuggingComponent? hugcomp);
+            if (hugcomp == null)
+            {
+                return;
+            }
+
+
+            component.GuardianContainer.Remove(uid);
+            DebugTools.Assert(!component.GuardianContainer.Contains(uid));
+
+            if (hugcomp.ReleaseSlugAction != null)
+                _actionsSystem.RemoveAction(uid, hugcomp.ReleaseSlugAction);
+
+            if (hugcomp.DominateVictimAction != null)
+                _actionsSystem.RemoveAction(uid, hugcomp.DominateVictimAction);
+
+            if (hugcomp.ActionBrainSlugJump != null)
+                _actionsSystem.AddAction(uid, hugcomp.ActionBrainSlugJump, null);
+
+            if (hugcomp.BrainSlugAction != null)
+                _actionsSystem.AddAction(uid, hugcomp.BrainSlugAction, null);
+        }
+
+
         public override void Update(float frameTime)
         {
             base.Update(frameTime);
+
+
 
             foreach (var comp in EntityQuery<BrainSlugComponent>())
             {
@@ -225,5 +301,6 @@ namespace Content.Server.Alien
                     targetId, targetId, PopupType.LargeCaution);
             }
         }
+
     }
 }

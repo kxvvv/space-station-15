@@ -3,8 +3,8 @@ using Content.Shared.Alien;
 using Robust.Shared.Audio;
 using Robust.Shared.GameStates;
 using Robust.Shared.Serialization.TypeSerializers.Implementations.Custom.Prototype;
-using Content.Shared.Damage;
 using Content.Shared.Chemistry.Reagent;
+using Content.Shared.Damage;
 
 namespace Content.Server.Alien;
 
@@ -12,24 +12,56 @@ namespace Content.Server.Alien;
 [Access(typeof(SharedBrainHuggingSystem))]
 public sealed class BrainHuggingComponent : Component
 {
-    [DataField("brainSlugActionId", customTypeSerializer: typeof(PrototypeIdSerializer<EntityTargetActionPrototype>))]
+    [DataField("brainslugTime")]
+    public TimeSpan BrainSlugTime = TimeSpan.FromSeconds(2);
+
+    [DataField("chansePounce"), ViewVariables(VVAccess.ReadWrite)]
+    public static int ChansePounce = 33;
+
+    [DataField("brainreleaseTime")]
+    public float BrainRealeseTime = 3f;
+
+
+    [DataField("paralyzeTime"), ViewVariables(VVAccess.ReadWrite)]
+    public float ParalyzeTime = 3f;
+
+    [DataField("ichorChemical", customTypeSerializer: typeof(PrototypeIdSerializer<ReagentPrototype>))]
+    public string IchorChemical = "Ichor";
+
+    [ViewVariables(VVAccess.ReadWrite), DataField("healRate")]
+    public float HealRate = 15f;
+
+    [ViewVariables(VVAccess.ReadWrite), DataField("soundBrainSlugJump")]
+    public SoundSpecifier? SoundBrainSlugJump = new SoundPathSpecifier("/Audio/Animals/brainslug_scream.ogg");
+
+
+
+
+    [DataField("brainSlugJumpActionId", customTypeSerializer: typeof(PrototypeIdSerializer<EntityTargetActionPrototype>))] // jump
+    public string ActionBrainSlugJumpId = "BrainSlugJump";
+
+    [DataField("brainSlugActionId", customTypeSerializer: typeof(PrototypeIdSerializer<EntityTargetActionPrototype>))] // infest
     public string BrainSlugActionId = "BrainSlug";
 
-    [DataField("dominateVictimActionId", customTypeSerializer: typeof(PrototypeIdSerializer<EntityTargetActionPrototype>))]
+    [DataField("dominateVictimActionId", customTypeSerializer: typeof(PrototypeIdSerializer<EntityTargetActionPrototype>))] // stun
     public string DominateVictimActionId = "DominateVictim";
 
-    [DataField("releaseSlugActionId", customTypeSerializer: typeof(PrototypeIdSerializer<EntityTargetActionPrototype>))]
+    [DataField("releaseSlugActionId", customTypeSerializer: typeof(PrototypeIdSerializer<EntityTargetActionPrototype>))] // release
     public string ReleaseSlugActionId = "ReleaseSlug";
 
 
-    [DataField("brainSlugAction")]
-    public EntityTargetAction? BrainSlugAction;
 
-    [DataField("dominateVictimAction")]
-    public EntityTargetAction? DominateVictimAction;
+    [DataField("actionBrainSlugJump", required: true)] // 
+    public WorldTargetAction ActionBrainSlugJump = new(); // jump
 
-    [DataField("releaseSlugAction")]
-    public EntityTargetAction? ReleaseSlugAction;
+    [DataField("brainSlugAction", required: true)]
+    public EntityTargetAction? BrainSlugAction; // infest
+
+    [DataField("dominateVictimAction", required: true)]
+    public EntityTargetAction? DominateVictimAction; // stun
+
+    [DataField("releaseSlugAction", required: true)]
+    public EntityTargetAction? ReleaseSlugAction; // release
 
 
 
@@ -38,23 +70,4 @@ public sealed class BrainHuggingComponent : Component
     {
         Params = AudioParams.Default.WithVolume(-3f),
     };
-
-    [DataField("paralyzeTime"), ViewVariables(VVAccess.ReadWrite)]
-    public float ParalyzeTime = 3f;
-
-    [DataField("brainslugTime")]
-    public float BrainSlugTime = 3f;
-
-    [DataField("brainreleaseTime")]
-    public float BrainRealeseTime = 3f;
-
-    [DataField("damage", required: true)]
-    [ViewVariables(VVAccess.ReadWrite)]
-    public DamageSpecifier Damage = default!;
-
-    [DataField("ichorChemical", customTypeSerializer: typeof(PrototypeIdSerializer<ReagentPrototype>))]
-    public string IchorChemical = "Ichor";
-
-    [ViewVariables(VVAccess.ReadWrite), DataField("healRate")]
-    public float HealRate = 15f;
 }
