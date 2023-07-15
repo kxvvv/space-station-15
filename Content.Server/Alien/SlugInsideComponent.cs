@@ -17,5 +17,5 @@ public sealed class SlugInsideComponent : Component
 
     [ViewVariables(VVAccess.ReadWrite)]
     [DataField("ReleaseControlName")]
-    public string ReleaseControlName = "ReleaseControlAction";
+    public string ReleaseControlName = "ReleaseControlAction"; // release control
 };

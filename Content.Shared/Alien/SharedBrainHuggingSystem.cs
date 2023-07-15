@@ -21,10 +21,18 @@ public sealed class TormentHostActionEvent : EntityTargetActionEvent { }
 
 public sealed class AssumeControlActionEvent : EntityTargetActionEvent { }
 
+public sealed class ReproduceActionEvent : EntityTargetActionEvent { }
+
 public sealed class ReleaseControlActionEvent : InstantActionEvent { }
 
 [Serializable, NetSerializable]
+public sealed class BrainHuggingDoAfterEvent : SimpleDoAfterEvent { }
+
+[Serializable, NetSerializable]
 public sealed class AssumeControlDoAfterEvent : SimpleDoAfterEvent { }
+
+[Serializable, NetSerializable]
+public sealed class ReproduceDoAfterEvent : SimpleDoAfterEvent { }
 
 [Serializable, NetSerializable]
 public sealed class ReleaseSlugDoAfterEvent : SimpleDoAfterEvent { }
@@ -32,5 +40,4 @@ public sealed class ReleaseSlugDoAfterEvent : SimpleDoAfterEvent { }
 [Serializable, NetSerializable]
 public sealed class ReleaseDoAfterEvent : SimpleDoAfterEvent { }
 
-[Serializable, NetSerializable]
-public sealed class BrainHuggingDoAfterEvent : SimpleDoAfterEvent { }
+

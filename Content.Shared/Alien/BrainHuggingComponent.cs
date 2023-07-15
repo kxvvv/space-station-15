@@ -17,6 +17,9 @@ public sealed class BrainHuggingComponent : Component
     [DataField("assumeControlTime")]
     public TimeSpan AssumeControlTime = TimeSpan.FromSeconds(2);
 
+    [DataField("reproduceTime")]
+    public TimeSpan ReproduceTime = TimeSpan.FromSeconds(2);
+
     [DataField("chansePounce"), ViewVariables(VVAccess.ReadWrite)]
     public static int ChansePounce = 33;
 
@@ -68,6 +71,8 @@ public sealed class BrainHuggingComponent : Component
     [DataField("assumeControlSlugAction", required: true)]
     public EntityTargetAction? AssumeControlAction; // assume control
 
+    [DataField("reproduceSlugAction", required: true)]
+    public EntityTargetAction? ReproduceAction; // reproduce
 
     [DataField("releaseSlugAction", required: true)]
     public EntityTargetAction? ReleaseSlugAction; // release

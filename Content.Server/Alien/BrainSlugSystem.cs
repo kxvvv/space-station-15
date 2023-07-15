@@ -18,6 +18,9 @@ using Content.Server.Mind;
 using Content.Shared.Actions.ActionTypes;
 using Robust.Shared.Prototypes;
 using Robust.Server.GameObjects;
+using Content.Server.Medical;
+using Content.Shared.Damage.Systems;
+using Content.Shared.StatusEffect;
 
 namespace Content.Server.Alien
 {
@@ -34,6 +37,7 @@ namespace Content.Server.Alien
         [Dependency] private readonly IEntityManager _entityManager = default!;
         [Dependency] private readonly IPrototypeManager _proto = default!;
         [Dependency] private readonly MindSystem _mind = default!;
+        [Dependency] private readonly VomitSystem _vomit = default!;
 
         public override void Initialize()
         {
@@ -52,6 +56,9 @@ namespace Content.Server.Alien
 
             SubscribeLocalEvent<BrainHuggingComponent, AssumeControlActionEvent>(OnAssumeControlAction);
             SubscribeLocalEvent<BrainHuggingComponent, AssumeControlDoAfterEvent>(AssumeControlDoAfter);
+
+            SubscribeLocalEvent<BrainHuggingComponent, ReproduceActionEvent>(OnReproduceAction);
+            SubscribeLocalEvent<BrainHuggingComponent, ReproduceDoAfterEvent>(ReproduceDoAfter);
 
             SubscribeLocalEvent<SlugInsideComponent, ReleaseControlActionEvent>(OnReleaseControlAction);
 
@@ -198,6 +205,9 @@ namespace Content.Server.Alien
                 if (component.AssumeControlAction != null)
                     _actionsSystem.AddAction(uid, component.AssumeControlAction, null);
 
+                if (component.ReproduceAction != null)
+                    _actionsSystem.AddAction(uid, component.ReproduceAction, null);
+
                 if (component.ActionBrainSlugJump != null)
                     _actionsSystem.RemoveAction(uid, component.ActionBrainSlugJump, null);
 
@@ -315,8 +325,49 @@ namespace Content.Server.Alien
                 }
         }
 
+        private void OnReproduceAction (EntityUid uid, BrainHuggingComponent comp, ReproduceActionEvent args)
+        {
+            if (args.Handled)
+                return;
+
+            args.Handled = true;
+            var target = args.Target;
+
+            TryComp(uid, out BrainHuggingComponent? hugcomp);
+            if (hugcomp == null)
+            {
+                return;
+            }
+
+            _popup.PopupEntity(Loc.GetString("You start to feel bad, as if something is about to come out of you!"), target, target, PopupType.LargeCaution);
+            _doAfterSystem.TryStartDoAfter(new DoAfterArgs(uid, hugcomp.ReproduceTime, new ReproduceDoAfterEvent(), uid, target: target, used: uid)
+            {
+                BreakOnTargetMove = false,
+                BreakOnUserMove = true,
+            });
+
+        }
+
+        private void ReproduceDoAfter(EntityUid uid, BrainHuggingComponent comp, ReproduceDoAfterEvent args)
+        {
+            var target = args.Target;
+            if (target == null)
+            {
+                return;
+            }
+
+            _popup.PopupEntity(Loc.GetString("You start to feel bad, as if something is about to come out of you!"), target.Value, target.Value, PopupType.LargeCaution);
+
+
+            if (TryComp<StatusEffectsComponent>(target.Value, out var status))
+                _stunSystem.TrySlowdown(target.Value, TimeSpan.FromSeconds(22f), true, 0.3f, 0.3f, status);
+            Spawn("MobBrainSlug", Transform(target.Value).Coordinates);
+            _vomit.Vomit(uid, -80f, -80f);
+        }
+
         private void OnReleaseControlAction(EntityUid uid, SlugInsideComponent comp, ReleaseControlActionEvent args)
         {
+
 
             if (TryComp(uid, out SlugInsideComponent? slug))
             {
@@ -392,6 +443,9 @@ namespace Content.Server.Alien
 
             if (hugcomp.AssumeControlAction != null)
                 _actionsSystem.RemoveAction(uid, hugcomp.AssumeControlAction, null);
+
+            if (hugcomp.ReproduceAction != null)
+                _actionsSystem.RemoveAction(uid, hugcomp.ReproduceAction, null);
 
             if (hugcomp.ActionBrainSlugJump != null)
                 _actionsSystem.AddAction(uid, hugcomp.ActionBrainSlugJump, null);

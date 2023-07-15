@@ -44,6 +44,13 @@
         priority: -14
         useDelay: 2
         event: !type:AssumeControlActionEvent # assume control
+      reproduceSlugAction:
+        icon: Interface/Actions/brainslug.rsi/borer_reproduce.png
+        name: reproduce
+        description: reproduce desc
+        priority: -15
+        useDelay: 2
+        event: !type:ReproduceActionEvent # reproduce
       releaseSlugAction:
         icon: Interface/Actions/brainslug.rsi/borer_outfest.png
         name: release
@@ -112,7 +119,9 @@
     - type: Tag
       tags:
         - CannotSuicide
-
+    - type: NoSlip
+    # - type: TypingIndicator
+    #   proto: slug
 
 - type: instantAction
   id: ReleaseControlAction
@@ -121,3 +130,4 @@
   description: Release
   serverEvent: !type:ReleaseControlActionEvent
   useDelay: 2
+  priority: -19
