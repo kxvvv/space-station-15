@@ -41,6 +41,7 @@ namespace Content.Server.Alien
         [Dependency] private readonly SharedActionsSystem _actionsSystem = default!;
         [Dependency] private readonly BloodstreamSystem _bloodstreamSystem = default!;
         [Dependency] private readonly ChatSystem _chat = default!;
+        [Dependency] private readonly IEntityManager _entityManager = default!;
 
         public override void Initialize()
         {
@@ -75,6 +76,13 @@ namespace Content.Server.Alien
         private void OnBrainSlugDoHit(EntityUid uid, BrainHuggingComponent component, ThrowDoHitEvent args)
         {
 
+            if (TryComp(args.Target, out SlugInsideComponent? sluginside))
+            {
+                return;
+            }
+
+            _entityManager.AddComponent<SlugInsideComponent>(args.Target);
+
             TryComp(uid, out BrainSlugComponent? defcomp);
             if (defcomp == null)
             {
@@ -86,7 +94,10 @@ namespace Content.Server.Alien
                 return;
 
 
+
+
             var host = args.Target;
+
 
 
             defcomp.GuardianContainer = host.EnsureContainer<ContainerSlot>("GuardianContainer");
