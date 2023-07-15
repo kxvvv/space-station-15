@@ -68,6 +68,7 @@ public sealed class BrainHuggingComponent : Component
     [DataField("assumeControlSlugAction", required: true)]
     public EntityTargetAction? AssumeControlAction; // assume control
 
+
     [DataField("releaseSlugAction", required: true)]
     public EntityTargetAction? ReleaseSlugAction; // release
 

@@ -21,6 +21,8 @@ public sealed class TormentHostActionEvent : EntityTargetActionEvent { }
 
 public sealed class AssumeControlActionEvent : EntityTargetActionEvent { }
 
+public sealed class ReleaseControlActionEvent : InstantActionEvent { }
+
 [Serializable, NetSerializable]
 public sealed class AssumeControlDoAfterEvent : SimpleDoAfterEvent { }
 

@@ -6,6 +6,8 @@ namespace Content.Server.Alien;
 [RegisterComponent]
 public sealed class BrainSlugComponent : Component
 {
+    public EntityUid Parent;
+
     public EntityUid EquipedOn;
 
     [ViewVariables(VVAccess.ReadWrite)] public ContainerSlot GuardianContainer = default!;

@@ -1,12 +1,6 @@
-using System.Linq;
-using Content.Server.Actions;
 using Content.Server.Popups;
 using Content.Shared.Actions;
-using Content.Shared.CombatMode;
-using Content.Shared.Damage;
-using Content.Shared.Hands;
 using Content.Shared.Humanoid;
-using Content.Shared.Inventory;
 using Content.Shared.Mobs;
 using Content.Shared.Mobs.Components;
 using Content.Shared.Popups;
@@ -21,15 +15,16 @@ using Content.Shared.Chemistry.Components;
 using Content.Server.Chat.Systems;
 using Content.Server.Speech.Components;
 using Content.Server.Mind;
+using Content.Shared.Actions.ActionTypes;
+using Robust.Shared.Prototypes;
+using Robust.Server.GameObjects;
 
 namespace Content.Server.Alien
 {
     public sealed class BrainSlugSystem : SharedBrainHuggingSystem
     {
         [Dependency] private SharedStunSystem _stunSystem = default!;
-        [Dependency] private readonly DamageableSystem _damageableSystem = default!;
         [Dependency] private readonly PopupSystem _popup = default!;
-        [Dependency] private readonly InventorySystem _inventory = default!;
         [Dependency] private readonly ThrowingSystem _throwing = default!;
         [Dependency] private readonly SharedAudioSystem _audioSystem = default!;
         [Dependency] private readonly SharedDoAfterSystem _doAfterSystem = default!;
@@ -37,6 +32,7 @@ namespace Content.Server.Alien
         [Dependency] private readonly BloodstreamSystem _bloodstreamSystem = default!;
         [Dependency] private readonly ChatSystem _chat = default!;
         [Dependency] private readonly IEntityManager _entityManager = default!;
+        [Dependency] private readonly IPrototypeManager _proto = default!;
         [Dependency] private readonly MindSystem _mind = default!;
 
         public override void Initialize()
@@ -56,6 +52,8 @@ namespace Content.Server.Alien
 
             SubscribeLocalEvent<BrainHuggingComponent, AssumeControlActionEvent>(OnAssumeControlAction);
             SubscribeLocalEvent<BrainHuggingComponent, AssumeControlDoAfterEvent>(AssumeControlDoAfter);
+
+            SubscribeLocalEvent<SlugInsideComponent, ReleaseControlActionEvent>(OnReleaseControlAction);
 
             SubscribeLocalEvent<BrainHuggingComponent, ReleaseSlugActionEvent>(OnReleaseSlugAction);
             SubscribeLocalEvent<BrainSlugComponent, ReleaseSlugDoAfterEvent>(ReleaseSlugDoAfter);
@@ -283,10 +281,63 @@ namespace Content.Server.Alien
 
         private void AssumeControlDoAfter(EntityUid uid, BrainHuggingComponent comp, AssumeControlDoAfterEvent args)
         {
+            var target = args.Target;
+            if (target == null)
+            {
+                return;
+            }
+
+            if (TryComp(target, out SlugInsideComponent? targetcomp))
+            {
+                targetcomp.Slug = uid;
+                if (TryComp(target, out SlugInsideComponent? ttt))
+                {
+                    if (_entityManager.TryGetComponent<ActorComponent?>(target, out var actorComponent))
+                    {
+                        var userid = actorComponent.PlayerSession.UserId;
+                        targetcomp.NetParent = userid;
+                    }
+                }
+                targetcomp.Parent = target.Value;
+            }
+
             _mind.TryGetMind(uid, out var mind);
 
             if (mind != null)
                 _mind.TransferTo(mind, args.Target);
+
+
+            if (targetcomp != null)
+                if (targetcomp.ReleaseControlName != null)
+                {
+                    var theAction = new InstantAction(_proto.Index<InstantActionPrototype>(targetcomp.ReleaseControlName));
+                    _actionsSystem.AddAction(target.Value, theAction, null);
+                }
+        }
+
+        private void OnReleaseControlAction(EntityUid uid, SlugInsideComponent comp, ReleaseControlActionEvent args)
+        {
+
+            if (TryComp(uid, out SlugInsideComponent? slug))
+            {
+                _mind.TryGetMind(uid, out var slugmind);
+                if (slugmind != null)
+                    _mind.TransferTo(slugmind, slug.Slug);
+            }
+            if (TryComp(uid, out SlugInsideComponent? parrent))
+            {
+                _mind.TryGetMind(parrent.NetParent, out var parrentmind);
+                if (parrentmind != null)
+                    _mind.TransferTo(parrentmind, parrent.Parent);
+            }
+            if (comp.ReleaseControlName != null)
+            {
+                var theAction = new InstantAction(_proto.Index<InstantActionPrototype>(comp.ReleaseControlName));
+                _actionsSystem.RemoveAction(uid, theAction, null);
+            }
+
+            _popup.PopupEntity(Loc.GetString("The slug got out of your nervous system."), uid, uid);
+
         }
 
         private void OnReleaseSlugAction(EntityUid uid, BrainHuggingComponent comp, ReleaseSlugActionEvent args)
@@ -326,7 +377,7 @@ namespace Content.Server.Alien
             {
                 var target = args.Target;
                 if (target != null && slugcomp != null)
-                _entityManager.RemoveComponent<SlugInsideComponent>(target.Value);
+                    _entityManager.RemoveComponent<SlugInsideComponent>(target.Value);
             }
 
 

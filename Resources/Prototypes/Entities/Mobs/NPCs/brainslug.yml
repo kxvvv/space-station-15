@@ -112,3 +112,12 @@
     - type: Tag
       tags:
         - CannotSuicide
+
+
+- type: instantAction
+  id: ReleaseControlAction
+  icon: Interface/Actions/brainslug.rsi/borer_brain_out.png
+  name: Release
+  description: Release
+  serverEvent: !type:ReleaseControlActionEvent
+  useDelay: 2
