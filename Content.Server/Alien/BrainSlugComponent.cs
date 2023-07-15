@@ -12,7 +12,7 @@ public sealed class BrainSlugComponent : Component
     [ViewVariables(VVAccess.ReadWrite)] public ContainerSlot GuardianContainer = default!;
 
     [DataField("damageFrequency"), ViewVariables(VVAccess.ReadWrite)]
-    public float DamageFrequency = 5;
+    public float DamageFrequency = 50;
 
     [ViewVariables] public float Accumulator = 0;
 }
