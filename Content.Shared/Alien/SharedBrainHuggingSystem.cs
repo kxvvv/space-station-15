@@ -17,6 +17,7 @@ public sealed class DominateVictimActionEvent : EntityTargetActionEvent { }
 
 public sealed class ReleaseSlugActionEvent : EntityTargetActionEvent { }
 
+public sealed class TormentHostActionEvent : EntityTargetActionEvent { }
 
 
 [Serializable, NetSerializable]

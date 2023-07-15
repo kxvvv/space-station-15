@@ -22,7 +22,10 @@ using Robust.Shared.Prototypes;
 using Content.Shared.DoAfter;
 using Content.Server.Body.Systems;
 using Content.Shared.Chemistry.Components;
-
+using Content.Shared.Actions.ActionTypes;
+using Content.Shared.Chat.Prototypes;
+using Content.Server.Chat.Systems;
+using Content.Server.Speech.Components;
 
 namespace Content.Server.Alien
 {
@@ -37,6 +40,7 @@ namespace Content.Server.Alien
         [Dependency] private readonly SharedDoAfterSystem _doAfterSystem = default!;
         [Dependency] private readonly SharedActionsSystem _actionsSystem = default!;
         [Dependency] private readonly BloodstreamSystem _bloodstreamSystem = default!;
+        [Dependency] private readonly ChatSystem _chat = default!;
 
         public override void Initialize()
         {
@@ -50,6 +54,8 @@ namespace Content.Server.Alien
             SubscribeLocalEvent<BrainHuggingComponent, BrainHuggingDoAfterEvent>(BrainHuggingOnDoAfter);
 
             SubscribeLocalEvent<BrainHuggingComponent, DominateVictimActionEvent>(OnDominateVictimAction);
+
+            SubscribeLocalEvent<BrainHuggingComponent, TormentHostActionEvent>(OnTormentHostAction);
 
             SubscribeLocalEvent<BrainHuggingComponent, ReleaseSlugActionEvent>(OnReleaseSlugAction);
             SubscribeLocalEvent<BrainSlugComponent, ReleaseSlugDoAfterEvent>(ReleaseSlugDoAfter);
@@ -178,6 +184,9 @@ namespace Content.Server.Alien
                 if (component.ReleaseSlugAction != null)
                     _actionsSystem.AddAction(uid, component.ReleaseSlugAction, null);
 
+                if (component.TormentHostSlugAction != null)
+                    _actionsSystem.AddAction(uid, component.TormentHostSlugAction, null);
+
                 if (component.ActionBrainSlugJump != null)
                     _actionsSystem.RemoveAction(uid, component.ActionBrainSlugJump, null);
 
@@ -222,9 +231,20 @@ namespace Content.Server.Alien
         }
 
 
+        private void OnTormentHostAction(EntityUid uid, BrainHuggingComponent comp, TormentHostActionEvent args)
+        {
+            var target = args.Target;
+            if (TryComp(target, out VocalComponent? scream))
+            {
+                if (scream != null)
+                {
+                    _popup.PopupEntity(Loc.GetString("YOU FEEL HELLISH PAIN, YOU WILL BE TURNED INSIDE OUT AND ROLLED ON THE FLOOR!"), target, target, PopupType.LargeCaution);
+                    _chat.TryEmoteWithChat(target, scream.ScreamId);
+                }
+            }
+        }
 
-
-        private void OnReleaseSlugAction (EntityUid uid, BrainHuggingComponent comp, ReleaseSlugActionEvent args)
+        private void OnReleaseSlugAction(EntityUid uid, BrainHuggingComponent comp, ReleaseSlugActionEvent args)
         {
             TryComp(uid, out BrainSlugComponent? defcomp);
             if (defcomp == null)
@@ -262,6 +282,9 @@ namespace Content.Server.Alien
             if (hugcomp.DominateVictimAction != null)
                 _actionsSystem.RemoveAction(uid, hugcomp.DominateVictimAction);
 
+            if (hugcomp.TormentHostSlugAction != null)
+                _actionsSystem.RemoveAction(uid, hugcomp.TormentHostSlugAction, null);
+
             if (hugcomp.ActionBrainSlugJump != null)
                 _actionsSystem.AddAction(uid, hugcomp.ActionBrainSlugJump, null);
 
@@ -289,16 +312,13 @@ namespace Content.Server.Alien
                     continue;
                 if (TryComp(targetId, out MobStateComponent? mobState))
                 {
-                    if (mobState.CurrentState is not MobState.Alive)
+                    if (mobState.CurrentState is MobState.Dead)
                     {
-                        _inventory.TryUnequip(targetId, "mask", true, true);
-                        comp.EquipedOn = new EntityUid();
                         return;
                     }
                 }
 
-                _popup.PopupEntity(Loc.GetString("You feel as if something is stirring inside you."),
-                    targetId, targetId, PopupType.LargeCaution);
+                _popup.PopupEntity(Loc.GetString("You feel as if something is stirring inside you."), targetId, targetId);
             }
         }
 

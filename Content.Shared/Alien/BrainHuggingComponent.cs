@@ -60,6 +60,9 @@ public sealed class BrainHuggingComponent : Component
     [DataField("dominateVictimAction", required: true)]
     public EntityTargetAction? DominateVictimAction; // stun
 
+    [DataField("tormentHostSlugAction", required: true)]
+    public EntityTargetAction? TormentHostSlugAction; // torment
+
     [DataField("releaseSlugAction", required: true)]
     public EntityTargetAction? ReleaseSlugAction; // release
 

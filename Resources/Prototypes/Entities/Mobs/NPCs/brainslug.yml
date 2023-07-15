@@ -31,12 +31,20 @@
         priority: -12
         useDelay: 2
         event: !type:DominateVictimActionEvent #stun
+      tormentHostSlugAction:
+        icon: Interface/Actions/brainslug.rsi/borer_torment.png
+        name: Torment
+        description: Torment desc
+        itemIconStyle: NoItem
+        priority: -20
+        useDelay: 2
+        event: !type:TormentHostActionEvent # torment
       releaseSlugAction:
         icon: Interface/Actions/brainslug.rsi/borer_brain_out.png
         name: release
         description: release desc
         itemIconStyle: NoItem
-        priority: -13
+        priority: -20
         useDelay: 2
         event: !type:ReleaseSlugActionEvent # release
     - type: Sprite
