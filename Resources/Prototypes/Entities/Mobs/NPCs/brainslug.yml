@@ -12,7 +12,6 @@
         icon: Interface/Actions/brainslug.rsi/borer_jump.png
         name: jump
         description: jump desc
-        itemIconStyle: NoItem
         range: 160
         priority: -10
         useDelay: 2
@@ -35,15 +34,20 @@
         icon: Interface/Actions/brainslug.rsi/borer_torment.png
         name: Torment
         description: Torment desc
-        itemIconStyle: NoItem
-        priority: -20
+        priority: -13
         useDelay: 2
         event: !type:TormentHostActionEvent # torment
+      assumeControlSlugAction:
+        icon: Interface/Actions/brainslug.rsi/borer_brain.png
+        name: assume
+        description: assume desc
+        priority: -14
+        useDelay: 2
+        event: !type:AssumeControlActionEvent # assume control
       releaseSlugAction:
-        icon: Interface/Actions/brainslug.rsi/borer_brain_out.png
+        icon: Interface/Actions/brainslug.rsi/borer_outfest.png
         name: release
         description: release desc
-        itemIconStyle: NoItem
         priority: -20
         useDelay: 2
         event: !type:ReleaseSlugActionEvent # release

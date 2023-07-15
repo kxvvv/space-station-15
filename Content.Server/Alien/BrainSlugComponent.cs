@@ -1,4 +1,3 @@
-using Content.Shared.Damage;
 using Robust.Shared.Containers;
 
 namespace Content.Server.Alien;

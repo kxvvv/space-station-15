@@ -19,6 +19,10 @@ public sealed class ReleaseSlugActionEvent : EntityTargetActionEvent { }
 
 public sealed class TormentHostActionEvent : EntityTargetActionEvent { }
 
+public sealed class AssumeControlActionEvent : EntityTargetActionEvent { }
+
+[Serializable, NetSerializable]
+public sealed class AssumeControlDoAfterEvent : SimpleDoAfterEvent { }
 
 [Serializable, NetSerializable]
 public sealed class ReleaseSlugDoAfterEvent : SimpleDoAfterEvent { }

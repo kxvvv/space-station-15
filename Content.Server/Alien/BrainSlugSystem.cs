@@ -7,25 +7,20 @@ using Content.Shared.Damage;
 using Content.Shared.Hands;
 using Content.Shared.Humanoid;
 using Content.Shared.Inventory;
-using Content.Shared.Inventory.Events;
 using Content.Shared.Mobs;
 using Content.Shared.Mobs.Components;
 using Content.Shared.Popups;
 using Content.Shared.Stunnable;
 using Content.Shared.Throwing;
-using Content.Shared.Weapons.Melee.Events;
 using Robust.Shared.Containers;
-using Robust.Shared.Player;
 using Robust.Shared.Utility;
 using Content.Shared.Alien;
-using Robust.Shared.Prototypes;
 using Content.Shared.DoAfter;
 using Content.Server.Body.Systems;
 using Content.Shared.Chemistry.Components;
-using Content.Shared.Actions.ActionTypes;
-using Content.Shared.Chat.Prototypes;
 using Content.Server.Chat.Systems;
 using Content.Server.Speech.Components;
+using Content.Server.Mind;
 
 namespace Content.Server.Alien
 {
@@ -42,6 +37,7 @@ namespace Content.Server.Alien
         [Dependency] private readonly BloodstreamSystem _bloodstreamSystem = default!;
         [Dependency] private readonly ChatSystem _chat = default!;
         [Dependency] private readonly IEntityManager _entityManager = default!;
+        [Dependency] private readonly MindSystem _mind = default!;
 
         public override void Initialize()
         {
@@ -57,6 +53,9 @@ namespace Content.Server.Alien
             SubscribeLocalEvent<BrainHuggingComponent, DominateVictimActionEvent>(OnDominateVictimAction);
 
             SubscribeLocalEvent<BrainHuggingComponent, TormentHostActionEvent>(OnTormentHostAction);
+
+            SubscribeLocalEvent<BrainHuggingComponent, AssumeControlActionEvent>(OnAssumeControlAction);
+            SubscribeLocalEvent<BrainHuggingComponent, AssumeControlDoAfterEvent>(AssumeControlDoAfter);
 
             SubscribeLocalEvent<BrainHuggingComponent, ReleaseSlugActionEvent>(OnReleaseSlugAction);
             SubscribeLocalEvent<BrainSlugComponent, ReleaseSlugDoAfterEvent>(ReleaseSlugDoAfter);
@@ -198,6 +197,9 @@ namespace Content.Server.Alien
                 if (component.TormentHostSlugAction != null)
                     _actionsSystem.AddAction(uid, component.TormentHostSlugAction, null);
 
+                if (component.AssumeControlAction != null)
+                    _actionsSystem.AddAction(uid, component.AssumeControlAction, null);
+
                 if (component.ActionBrainSlugJump != null)
                     _actionsSystem.RemoveAction(uid, component.ActionBrainSlugJump, null);
 
@@ -255,6 +257,38 @@ namespace Content.Server.Alien
             }
         }
 
+        private void OnAssumeControlAction(EntityUid uid, BrainHuggingComponent component, AssumeControlActionEvent args)
+        {
+            if (args.Handled)
+                return;
+
+            args.Handled = true;
+            var target = args.Target;
+
+            TryComp(uid, out BrainHuggingComponent? hugcomp);
+            if (hugcomp == null)
+            {
+                return;
+            }
+
+            _popup.PopupEntity(Loc.GetString("You feel like a slug inside your head wants to take over your nervous system!"), target, target, PopupType.LargeCaution);
+            _doAfterSystem.TryStartDoAfter(new DoAfterArgs(uid, hugcomp.AssumeControlTime, new AssumeControlDoAfterEvent(), uid, target: target, used: uid)
+            {
+                BreakOnTargetMove = false,
+                BreakOnUserMove = true,
+            });
+
+        }
+
+
+        private void AssumeControlDoAfter(EntityUid uid, BrainHuggingComponent comp, AssumeControlDoAfterEvent args)
+        {
+            _mind.TryGetMind(uid, out var mind);
+
+            if (mind != null)
+                _mind.TransferTo(mind, args.Target);
+        }
+
         private void OnReleaseSlugAction(EntityUid uid, BrainHuggingComponent comp, ReleaseSlugActionEvent args)
         {
             TryComp(uid, out BrainSlugComponent? defcomp);
@@ -287,6 +321,15 @@ namespace Content.Server.Alien
             component.GuardianContainer.Remove(uid);
             DebugTools.Assert(!component.GuardianContainer.Contains(uid));
 
+
+            if (TryComp(args.Target, out SlugInsideComponent? slugcomp))
+            {
+                var target = args.Target;
+                if (target != null && slugcomp != null)
+                _entityManager.RemoveComponent<SlugInsideComponent>(target.Value);
+            }
+
+
             if (hugcomp.ReleaseSlugAction != null)
                 _actionsSystem.RemoveAction(uid, hugcomp.ReleaseSlugAction);
 
@@ -295,6 +338,9 @@ namespace Content.Server.Alien
 
             if (hugcomp.TormentHostSlugAction != null)
                 _actionsSystem.RemoveAction(uid, hugcomp.TormentHostSlugAction, null);
+
+            if (hugcomp.AssumeControlAction != null)
+                _actionsSystem.RemoveAction(uid, hugcomp.AssumeControlAction, null);
 
             if (hugcomp.ActionBrainSlugJump != null)
                 _actionsSystem.AddAction(uid, hugcomp.ActionBrainSlugJump, null);

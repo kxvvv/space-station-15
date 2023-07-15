@@ -4,7 +4,6 @@ using Robust.Shared.Audio;
 using Robust.Shared.GameStates;
 using Robust.Shared.Serialization.TypeSerializers.Implementations.Custom.Prototype;
 using Content.Shared.Chemistry.Reagent;
-using Content.Shared.Damage;
 
 namespace Content.Server.Alien;
 
@@ -13,7 +12,10 @@ namespace Content.Server.Alien;
 public sealed class BrainHuggingComponent : Component
 {
     [DataField("brainslugTime")]
-    public TimeSpan BrainSlugTime = TimeSpan.FromSeconds(2);
+    public TimeSpan BrainSlugTime = TimeSpan.FromSeconds(2); // !!!ALL COOLDOWNS IS LOW FOR TESTS!!!
+
+    [DataField("assumeControlTime")]
+    public TimeSpan AssumeControlTime = TimeSpan.FromSeconds(2);
 
     [DataField("chansePounce"), ViewVariables(VVAccess.ReadWrite)]
     public static int ChansePounce = 33;
@@ -62,6 +64,9 @@ public sealed class BrainHuggingComponent : Component
 
     [DataField("tormentHostSlugAction", required: true)]
     public EntityTargetAction? TormentHostSlugAction; // torment
+
+    [DataField("assumeControlSlugAction", required: true)]
+    public EntityTargetAction? AssumeControlAction; // assume control
 
     [DataField("releaseSlugAction", required: true)]
     public EntityTargetAction? ReleaseSlugAction; // release
