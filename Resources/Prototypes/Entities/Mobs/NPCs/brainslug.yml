@@ -4,6 +4,9 @@
   id: MobBrainSlug
   suffix: qweqwe
   components:
+    - type: CollectiveMind
+      channel: Slug
+      channelColor: "#8a0303"
     - type: BrainSlug ## first
     - type: BrainHugging ## second
       paralyzeTime: 3
