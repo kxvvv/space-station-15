@@ -8,6 +8,7 @@ namespace Content.Shared.Alert
     public enum AlertType : byte
     {
         Error,
+        Genes,
         LowOxygen,
         LowPressure,
         HighPressure,
@@ -36,6 +37,7 @@ namespace Content.Shared.Alert
         Muted,
         VowOfSilence,
         VowBroken,
+        GenesPoint,
         Essence,
         Corporeal,
         Debug1,

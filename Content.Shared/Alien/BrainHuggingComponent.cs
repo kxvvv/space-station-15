@@ -4,6 +4,12 @@ using Robust.Shared.Audio;
 using Robust.Shared.GameStates;
 using Robust.Shared.Serialization.TypeSerializers.Implementations.Custom.Prototype;
 using Content.Shared.Chemistry.Reagent;
+using System.Numerics;
+using Content.Shared.FixedPoint;
+using Content.Shared.Store;
+using Robust.Shared.GameStates;
+using Robust.Shared.Prototypes;
+using Robust.Shared.Serialization.TypeSerializers.Implementations.Custom.Prototype;
 
 namespace Content.Server.Alien;
 
@@ -11,6 +17,24 @@ namespace Content.Server.Alien;
 [Access(typeof(SharedBrainHuggingSystem))]
 public sealed class BrainHuggingComponent : Component
 {
+
+    [ViewVariables(VVAccess.ReadWrite)] public FixedPoint2 SlugGenes = 140;
+
+    [DataField("stolenEssenceCurrencyPrototype", customTypeSerializer: typeof(PrototypeIdSerializer<CurrencyPrototype>))]
+    public string StolenEssenceCurrencyPrototype = "StolenGenes";
+
+
+    [ViewVariables] public float Accumulator = 0;
+
+    [ViewVariables] public float AccumulatorStarveNotify = 0;
+
+    [ViewVariables(VVAccess.ReadWrite), DataField("maxEssence")]
+    public FixedPoint2 EssenceRegenCap = 75;
+
+
+
+
+
     [DataField("brainslugTime")]
     public TimeSpan BrainSlugTime = TimeSpan.FromSeconds(2); // !!!ALL COOLDOWNS IS LOW FOR TESTS!!!
 
@@ -76,6 +100,9 @@ public sealed class BrainHuggingComponent : Component
 
     [DataField("releaseSlugAction", required: true)]
     public EntityTargetAction? ReleaseSlugAction; // release
+
+    [DataField("storeSlugAction", required: true)]
+    public EntityTargetAction? StoreSlugAction; // ui store
 
 
 

@@ -23,6 +23,8 @@ public sealed class AssumeControlActionEvent : EntityTargetActionEvent { }
 
 public sealed class ReproduceActionEvent : EntityTargetActionEvent { }
 
+public sealed class StoreActionEvent : EntityTargetActionEvent { }
+
 public sealed class ReleaseControlActionEvent : InstantActionEvent { }
 
 [Serializable, NetSerializable]
@@ -38,6 +40,11 @@ public sealed class ReproduceDoAfterEvent : SimpleDoAfterEvent { }
 public sealed class ReleaseSlugDoAfterEvent : SimpleDoAfterEvent { }
 
 [Serializable, NetSerializable]
+public sealed class StoreDoAfterEvent : SimpleDoAfterEvent { }
+
+[Serializable, NetSerializable]
 public sealed class ReleaseDoAfterEvent : SimpleDoAfterEvent { }
+
+
 
 

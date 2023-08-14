@@ -19,8 +19,15 @@ using Content.Shared.Actions.ActionTypes;
 using Robust.Shared.Prototypes;
 using Robust.Server.GameObjects;
 using Content.Server.Medical;
-using Content.Shared.Damage.Systems;
 using Content.Shared.StatusEffect;
+using Content.Shared.FixedPoint;
+using Content.Server.Store.Components;
+using Content.Shared.Alert;
+using Content.Server.Store.Systems;
+using Content.Server.GameTicking;
+using Content.Shared.Revenant.Components;
+using Content.Shared.Revenant;
+using Content.Shared.Examine;
 
 namespace Content.Server.Alien
 {
@@ -38,6 +45,9 @@ namespace Content.Server.Alien
         [Dependency] private readonly IPrototypeManager _proto = default!;
         [Dependency] private readonly MindSystem _mind = default!;
         [Dependency] private readonly VomitSystem _vomit = default!;
+        [Dependency] private readonly StoreSystem _store = default!;
+        [Dependency] private readonly AlertsSystem _alerts = default!;
+
 
         public override void Initialize()
         {
@@ -60,6 +70,10 @@ namespace Content.Server.Alien
             SubscribeLocalEvent<BrainHuggingComponent, ReproduceActionEvent>(OnReproduceAction);
             SubscribeLocalEvent<BrainHuggingComponent, ReproduceDoAfterEvent>(ReproduceDoAfter);
 
+            //SubscribeLocalEvent<BrainHuggingComponent, StoreActionEvent>(OnStoreAction);
+            SubscribeLocalEvent<BrainHuggingComponent, StoreActionEvent>(OnShop);
+            SubscribeLocalEvent<BrainHuggingComponent, ExaminedEvent>(OnExamine);
+
             SubscribeLocalEvent<SlugInsideComponent, ReleaseControlActionEvent>(OnReleaseControlAction);
 
             SubscribeLocalEvent<BrainHuggingComponent, ReleaseSlugActionEvent>(OnReleaseSlugAction);
@@ -69,13 +83,49 @@ namespace Content.Server.Alien
 
         protected void OnStartup(EntityUid uid, BrainHuggingComponent component, ComponentStartup args)
         {
+            ChangeSlugGenesAmount(uid, 0, component);
+
             if (component.ActionBrainSlugJump != null)
                 _actionsSystem.AddAction(uid, component.ActionBrainSlugJump, null);
 
             if (component.BrainSlugAction != null)
                 _actionsSystem.AddAction(uid, component.BrainSlugAction, null);
+
+            if (component.StoreSlugAction != null)
+                _actionsSystem.AddAction(uid, component.StoreSlugAction, null);
         }
 
+
+        private bool ChangeSlugGenesAmount(EntityUid uid, FixedPoint2 amount, BrainHuggingComponent? component = null)
+        {
+            if (!Resolve(uid, ref component))
+                return false;
+
+            component.SlugGenes += amount;
+
+            if (TryComp<StoreComponent>(uid, out var store))
+                _store.UpdateUserInterface(uid, uid, store);
+
+            _alerts.ShowAlert(uid, AlertType.GenesPoint, (short) Math.Clamp(Math.Round(component.SlugGenes.Float() / 10f), 0, 16));
+
+            return true;
+        }
+
+        private void OnExamine(EntityUid uid, BrainHuggingComponent component, ExaminedEvent args)
+        {
+            if (args.Examiner == args.Examined)
+            {
+                args.PushMarkup(Loc.GetString("revenant-essence-amount",
+                    ("current", component.SlugGenes.Int()), ("max", component.EssenceRegenCap.Int())));
+            }
+        }
+
+        private void OnShop(EntityUid uid, BrainHuggingComponent component, StoreActionEvent args)
+        {
+            if (!TryComp<StoreComponent>(uid, out var store))
+                return;
+            _store.ToggleUi(uid, uid, store);
+        }
 
         private void OnBrainSlugDoHit(EntityUid uid, BrainHuggingComponent component, ThrowDoHitEvent args)
         {
@@ -208,6 +258,9 @@ namespace Content.Server.Alien
                 if (component.ReproduceAction != null)
                     _actionsSystem.AddAction(uid, component.ReproduceAction, null);
 
+                if (component.StoreSlugAction != null)
+                    _actionsSystem.AddAction(uid, component.StoreSlugAction, null);
+
                 if (component.ActionBrainSlugJump != null)
                     _actionsSystem.RemoveAction(uid, component.ActionBrainSlugJump, null);
 
@@ -325,7 +378,7 @@ namespace Content.Server.Alien
                 }
         }
 
-        private void OnReproduceAction (EntityUid uid, BrainHuggingComponent comp, ReproduceActionEvent args)
+        private void OnReproduceAction(EntityUid uid, BrainHuggingComponent comp, ReproduceActionEvent args)
         {
             if (args.Handled)
                 return;
@@ -447,12 +500,84 @@ namespace Content.Server.Alien
             if (hugcomp.ReproduceAction != null)
                 _actionsSystem.RemoveAction(uid, hugcomp.ReproduceAction, null);
 
+            if (hugcomp.StoreSlugAction != null)
+                _actionsSystem.RemoveAction(uid, hugcomp.StoreSlugAction, null);
+
             if (hugcomp.ActionBrainSlugJump != null)
                 _actionsSystem.AddAction(uid, hugcomp.ActionBrainSlugJump, null);
 
             if (hugcomp.BrainSlugAction != null)
                 _actionsSystem.AddAction(uid, hugcomp.BrainSlugAction, null);
         }
+
+        private void OnStoreAction(EntityUid uid, BrainHuggingComponent component, StoreActionEvent args)
+        {
+            _popup.PopupEntity(Loc.GetString("Slug don't have enough genes"), uid, uid);
+        }
+
+
+        //private void OnBlightAction(EntityUid uid, BrainHuggingComponent component, CoalInjectionActionEvent args)
+        //{
+        //    if (args.Handled)
+        //        return;
+
+        //    if (!TryUseAbility(uid, component, component.BlightCost, component.BlightDebuffs))
+        //        return;
+
+        //    args.Handled = true;
+        //    // TODO: When disease refactor is in.
+        //}
+
+
+        //private bool TryUseAbility(EntityUid uid, BrainHuggingComponent component, FixedPoint2 abilityCost, Vector2 debuffs)
+        //{
+        //    if (component.Essence <= abilityCost)
+        //    {
+        //        _popup.PopupEntity(Loc.GetString("Slug don't have enough genes"), uid, uid);
+        //        return false;
+        //    }
+
+        //    //var tileref = Transform(uid).Coordinates.GetTileRef();
+        //    //if (tileref != null)
+        //    //{
+        //    //    if (_physics.GetEntitiesIntersectingBody(uid, (int) CollisionGroup.Impassable).Count > 0)
+        //    //    {
+        //    //        _popup.PopupEntity(Loc.GetString("revenant-in-solid"), uid, uid);
+        //    //        return false;
+        //    //    }
+        //    //}
+
+        //    ChangeGenesAmount(uid, abilityCost, component, false);
+
+        //    //_statusEffects.TryAddStatusEffect<CorporealComponent>(uid, "Corporeal", TimeSpan.FromSeconds(debuffs.Y), false);
+        //    //_stun.TryStun(uid, TimeSpan.FromSeconds(debuffs.X), false);
+
+        //    return true;
+        //}
+
+        //public bool ChangeGenesAmount(EntityUid uid, FixedPoint2 amount, BrainHuggingComponent? component = null, bool allowDeath = true)
+        //{
+        //    if (!Resolve(uid, ref component))
+        //        return false;
+
+        //    if (!allowDeath && component.Essence + amount <= 0)
+        //        return false;
+
+        //    component.Essence += amount;
+
+        //    //if (regenCap)
+        //    //    FixedPoint2.Min(component.Essence, component.EssenceRegenCap);
+
+        //    if (TryComp<StoreComponent>(uid, out var store))
+        //        _store.UpdateUserInterface(uid, uid, store);
+
+        //    //_alerts.ShowAlert(uid, AlertType.Essence, (short) Math.Clamp(Math.Round(component.Essence.Float() / 10f), 0, 16));
+
+
+        //    return true;
+        //}
+
+
 
 
         public override void Update(float frameTime)
@@ -480,9 +605,34 @@ namespace Content.Server.Alien
                     }
                 }
 
-                _popup.PopupEntity(Loc.GetString("You feel as if something is stirring inside you."), targetId, targetId);
-            }
-        }
+                foreach (var rev in EntityQuery<BrainHuggingComponent>())
+                {
+                    rev.Accumulator += frameTime;
 
+                    if (rev.Accumulator <= 1)
+                        continue;
+                    rev.Accumulator -= 1;
+
+                    if (rev.SlugGenes <= 40)
+                    {
+                        rev.AccumulatorStarveNotify += 1;
+                        if (rev.AccumulatorStarveNotify > 30)
+                        {
+                            rev.AccumulatorStarveNotify = 0;
+                            _popup.PopupEntity(Loc.GetString("flesh-cultist-hungry"),
+                                rev.Owner, rev.Owner, PopupType.Large);
+                        }
+                    }
+
+                    //if (rev.SlugGenes < 0)
+                    //{
+                    //    ParasiteComesOut(rev.Owner, rev);
+                    //}
+
+                    //ChangeSlugGenesAmount(rev.Owner, rev.HungerСonsumption, rev);
+                }
+            }
+
+        }
     }
 }
